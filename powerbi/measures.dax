@@ -11,7 +11,13 @@
 // =============================================================================
 As Of Week Number =
 VAR Selected = SELECTEDVALUE ( AsOfWeek[WeekNumber] )
-VAR Latest = MAX ( DimProgramWeek[WeekNumber] )
+VAR Cohorts = VALUES ( DimLearner[CohortKey] )
+VAR Latest =
+    CALCULATE (
+        MAX ( DimProgramWeek[WeekNumber] ),
+        REMOVEFILTERS ( DimProgramWeek ),
+        TREATAS ( Cohorts, DimProgramWeek[CohortKey] )
+    )
 RETURN
     IF ( NOT ISBLANK ( Selected ), Selected, Latest )
 
@@ -189,11 +195,11 @@ Is At Risk =
 VAR AsOf = [As Of Week Number]
 VAR Att = [Trailing Attendance Rate]
 VAR Part = [Trailing Participation Rate]
-VAR Work = [Trailing Coursework Average]
+VAR Coursework = [Trailing Coursework Average]
 VAR Hits =
     IF ( NOT ISBLANK ( Att ) && Att < 0.70, 1, 0 )
         + IF ( NOT ISBLANK ( Part ) && Part < 0.60, 1, 0 )
-        + IF ( NOT ISBLANK ( Work ) && Work < 40, 1, 0 )
+        + IF ( NOT ISBLANK ( Coursework ) && Coursework < 40, 1, 0 )
 RETURN
     IF ( AsOf < 3, 0, IF ( Hits >= 2, 1, 0 ) )
 
@@ -216,17 +222,17 @@ VAR AsOf = [As Of Week Number]
 VAR StartW = MAX ( 1, AsOf - 1 )
 VAR Att = [Trailing Attendance Rate]
 VAR Part = [Trailing Participation Rate]
-VAR Work = [Trailing Coursework Average]
+VAR Coursework = [Trailing Coursework Average]
 VAR AttMiss = NOT ISBLANK ( Att ) && Att < 0.70
 VAR PartMiss = NOT ISBLANK ( Part ) && Part < 0.60
-VAR WorkMiss = NOT ISBLANK ( Work ) && Work < 40
+VAR WorkMiss = NOT ISBLANK ( Coursework ) && Coursework < 40
 VAR Hits =
     IF ( AttMiss, 1, 0 ) + IF ( PartMiss, 1, 0 ) + IF ( WorkMiss, 1, 0 )
 VAR Detail =
     "Over weeks " & StartW & " to " & AsOf
         & ", in class " & IF ( ISBLANK ( Att ), "n/a", FORMAT ( Att, "0%" ) )
         & ", took part " & IF ( ISBLANK ( Part ), "n/a", FORMAT ( Part, "0%" ) )
-        & ", lab and quiz together " & IF ( ISBLANK ( Work ), "n/a", FORMAT ( Work, "0" ) )
+        & ", lab and quiz together " & IF ( ISBLANK ( Coursework ), "n/a", FORMAT ( Coursework, "0" ) )
         & ". "
 VAR Which =
     IF ( AttMiss, "In class under 70%. ", "" )
@@ -325,13 +331,13 @@ RETURN
 // Outcome (known only after the program)
 // =============================================================================
 Outcome (known only after the program) =
-VAR Status = SELECTEDVALUE ( DimLearner[GraduationStatus] )
+VAR GradStatus = SELECTEDVALUE ( DimLearner[GraduationStatus] )
 VAR Certified = SELECTEDVALUE ( DimLearner[CertificationStatus] )
 RETURN
     IF (
-        ISBLANK ( Status ),
+        ISBLANK ( GradStatus ),
         "In progress",
-        IF ( Status = "Non Graduate", "Did not graduate", Status )
+        IF ( GradStatus = "Non Graduate", "Did not graduate", GradStatus )
             & ", "
             & IF (
                 Certified = "Certified",

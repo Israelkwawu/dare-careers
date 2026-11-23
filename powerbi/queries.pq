@@ -199,12 +199,11 @@ let
     AddUse = Table.AddColumn(AddMinutes, "RowUse", each
         let
             role = if [Role] = null then "" else Text.Lower(Text.Trim(Text.From([Role]))),
-            roleOk = role = "" or role = "participant",
-            raw = if [DurationRaw] = null then "" else Text.Trim(Text.From([DurationRaw]))
+            roleOk = role = "" or role = "participant"
         in
             if not roleOk then "Not a learner"
             else if [EmailKey] = null or [ClassDate] = null then "No identity"
-            else if raw <> "" and [DurationMinutes] = null then "Bad duration"
+            else if [DurationMinutes] = null then "Bad duration"
             else "Keep",
         type text
     ),

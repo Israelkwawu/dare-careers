@@ -65,7 +65,6 @@ Relationships, all one-to-many, single direction, from the dimension to the fact
 | From | To |
 | --- | --- |
 | DimCohort[CohortKey] | DimLearner[CohortKey] |
-| DimCohort[CohortKey] | DimProgramWeek[CohortKey] |
 | DimCohort[CohortKey] | FeedCheck[CohortKey] |
 | DimLearner[LearnerKey] | FactAttendance[LearnerKey] |
 | DimLearner[LearnerKey] | FactParticipation[LearnerKey] |
@@ -76,7 +75,7 @@ Relationships, all one-to-many, single direction, from the dimension to the fact
 | DimDate[Date] | FactAttendance[ClassDate] |
 | DimDate[Date] | FactParticipation[ClassDate] |
 
-Do not relate `AsOfWeek`. Do not relate `DataExceptions`. Do not relate `DimDate` to `DimProgramWeek`. Do not relate track to anything. Track filters through the learner.
+Do not relate `DimCohort` to `DimProgramWeek`: cohort filters facts through `DimLearner`, while week filters facts through `DimProgramWeek`. Connecting both dimensions would create ambiguous paths. Do not relate `AsOfWeek`. Do not relate `DataExceptions`. Do not relate `DimDate` to `DimProgramWeek`. Do not relate track to anything. Track filters through the learner.
 
 Create a hierarchy on `DimLearner` named Learner: `CohortName`, then `Track`, then `LearnerName`.
 

@@ -24,13 +24,15 @@ Loaded tables:
 
 Relationships are one-to-many, single direction, from the dimension to the facts:
 
-- `DimCohort[CohortKey]` to `DimLearner` and to `DimProgramWeek`.
+- `DimCohort[CohortKey]` to `DimLearner`.
 - `DimLearner[LearnerKey]` to all three facts.
 - `DimProgramWeek[ProgramWeekKey]` to all three facts.
 - `DimDate[Date]` to `FactAttendance[ClassDate]` and `FactParticipation[ClassDate]`.
 - `DimCohort[CohortKey]` to `FeedCheck[CohortKey]`.
 
-Track is not a dimension and is not a key on the facts. Filtering `DimLearner[Track]` reaches the facts through the learner. That avoids a second path from track to week.
+`DimCohort` is deliberately not related to `DimProgramWeek`. A cohort-to-week relationship as well as a cohort-to-learner relationship would create two active paths from cohort to each fact. Cohort and track filters reach facts through `DimLearner`; program week filters facts through `DimProgramWeek`. `DimProgramWeek` still carries `CohortKey` so its week keys remain intake-scoped.
+
+Track is not a dimension and is not a key on the facts. Filtering `DimLearner[Track]` reaches the facts through the learner. This avoids a second path from track to week.
 
 `WeekNumber` is hidden on the facts so it is not used to build a second week relationship. The visible week is `DimProgramWeek`.
 
@@ -48,6 +50,7 @@ A track that ran a different calendar inside the same intake folder would inheri
 
 - **One week dimension of 1 to 10, typed in.** A removed week 10 would still appear, and two intakes would share weeks that are not the same dates.
 - **An active relationship from the date table to the program week.** Filtering a date and a week together would fan out. The date table serves the daily facts only.
+- **An active relationship from cohort to program week.** Together with the cohort-to-learner relationship, it creates ambiguous filter paths into the facts. Cohort filters the facts through learners; the week key is already scoped by cohort.
 - **Track as its own dimension related to both learners and weeks.** Two filter paths into the facts, and easy to double-count.
 - **Putting the as-of week on `DimProgramWeek` as a page filter.** That shows one week. It does not show "everything known up through this week," and it cannot show a fortnight that starts in the previous week. A disconnected table lets each measure choose cumulative, trailing, or this week.
 - **Calculating the call list in Power Query for the latest week only.** The Monday view has to move back through the finished intake. The flag is a measure so the selected week changes it.
