@@ -53,7 +53,7 @@
               },
               "queryRef": "DimLearner.CohortName Hierarchy.Track",
               "nativeQueryRef": "CohortName Hierarchy Track",
-              "active": false
+              "active": true
             },
             {
               "field": {
@@ -73,7 +73,7 @@
               },
               "queryRef": "DimLearner.CohortName Hierarchy.LearnerName",
               "nativeQueryRef": "CohortName Hierarchy LearnerName",
-              "active": false
+              "active": true
             }
           ]
         },
@@ -233,7 +233,32 @@
             "isPinned": true
           }
         ],
-        "root": {}
+        "root": {
+          "children": [
+            {
+              "identityValues": [
+                {
+                  "Literal": {
+                    "Value": "'Aug 2024 intake'"
+                  }
+                }
+              ],
+              "isToggled": true,
+              "children": [
+                {
+                  "identityValues": [
+                    {
+                      "Literal": {
+                        "Value": "'Power BI'"
+                      }
+                    }
+                  ],
+                  "isToggled": true
+                }
+              ]
+            }
+          ]
+        }
       }
     ],
     "visualContainerObjects": {

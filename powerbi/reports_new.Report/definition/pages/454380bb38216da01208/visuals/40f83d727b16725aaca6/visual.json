@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "40f83d727b16725aaca6",
   "position": {
-    "x": 640,
-    "y": 24,
+    "x": 639.7536945812808,
+    "y": 23.940886699507388,
     "z": 11000,
-    "height": 80,
-    "width": 600,
+    "height": 57.192118226600982,
+    "width": 599.85221674876846,
     "tabOrder": 11000
   },
   "visual": {
@@ -81,7 +81,7 @@
                           [
                             {
                               "Literal": {
-                                "Value": "'Cloud'"
+                                "Value": "'Power BI'"
                               }
                             }
                           ]

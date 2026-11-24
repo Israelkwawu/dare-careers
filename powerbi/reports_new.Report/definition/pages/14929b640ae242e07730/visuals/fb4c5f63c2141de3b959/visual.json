@@ -46,6 +46,13 @@
                   "Value": "'Back'"
                 }
               }
+            },
+            "tooltip": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Return to the page you came from. In Power BI Desktop edit mode, Ctrl+click; in reading view, click normally.'"
+                }
+              }
             }
           }
         }
