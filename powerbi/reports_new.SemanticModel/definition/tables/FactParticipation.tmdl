@@ -1,0 +1,71 @@
+table FactParticipation
+	lineageTag: 88f2f614-08fe-45b0-99b9-045f5500cbdd
+
+	column LearnerKey
+		dataType: string
+		lineageTag: 78bc3f3c-44a3-432f-a80d-ca5de4af3559
+		summarizeBy: none
+		sourceColumn: LearnerKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column ProgramWeekKey
+		dataType: string
+		lineageTag: 9b40d735-890f-4f75-9302-bee95eb6048f
+		summarizeBy: none
+		sourceColumn: ProgramWeekKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column WeekNumber
+		dataType: int64
+		formatString: 0
+		lineageTag: f4793193-9229-4a8c-b6c0-d242b3000c8e
+		summarizeBy: sum
+		sourceColumn: WeekNumber
+
+		annotation SummarizationSetBy = Automatic
+
+	column ClassDate
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: cd756ca8-e27d-444c-8db9-8196737837eb
+		summarizeBy: none
+		sourceColumn: ClassDate
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Participated
+		dataType: int64
+		formatString: 0
+		lineageTag: 43d54e10-f5ab-4cf3-9877-e61e52d378cc
+		summarizeBy: sum
+		sourceColumn: Participated
+
+		annotation SummarizationSetBy = Automatic
+
+	partition FactParticipation = m
+		mode: import
+		source =
+				let
+				    Days = Table.SelectRows(stgClassWeek, each [Feed] = "Participation" and [WeekNumber] <> null),
+				    DaySlim = Table.AddColumn(Table.SelectColumns(Days, {"CohortKey", "Track", "ClassDate", "WeekNumber"}), "CohortTrack", each [CohortKey] & "|" & [Track], type text),
+				    People = Table.AddColumn(Table.SelectColumns(DimLearner, {"LearnerKey", "CohortKey", "Track"}), "CohortTrack", each [CohortKey] & "|" & [Track], type text),
+				    Nested = Table.NestedJoin(DaySlim, {"CohortTrack"}, People, {"CohortTrack"}, "L", JoinKind.LeftOuter),
+				    Grid = Table.SelectRows(Table.ExpandTableColumn(Nested, "L", {"LearnerKey"}), each [LearnerKey] <> null),
+				    Hit = Table.Distinct(Table.SelectColumns(Table.SelectRows(stgParticipationMatched, each [MatchStatus] = "Matched" and [LearnerKey] <> null and [ClassDate] <> null), {"LearnerKey", "ClassDate"})),
+				    HitFlag = Table.AddColumn(Hit, "DidParticipate", each 1, Int64.Type),
+				    Joined = Table.NestedJoin(Grid, {"LearnerKey", "ClassDate"}, HitFlag, {"LearnerKey", "ClassDate"}, "H", JoinKind.LeftOuter),
+				    Expanded = Table.ExpandTableColumn(Joined, "H", {"DidParticipate"}),
+				    Flag = Table.AddColumn(Expanded, "Participated", each if [DidParticipate] = null then 0 else [DidParticipate], Int64.Type),
+				    Keyed = Table.AddColumn(Flag, "ProgramWeekKey", each [CohortKey] & "|" & Text.From([WeekNumber]), type text),
+				    Result = Table.SelectColumns(Keyed, {"LearnerKey", "ProgramWeekKey", "WeekNumber", "ClassDate", "Participated"})
+				in
+				    Table.TransformColumnTypes(Result, {{"WeekNumber", Int64.Type}, {"ClassDate", type date}, {"Participated", Int64.Type}})
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

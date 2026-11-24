@@ -1,0 +1,256 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "22f89e7971b5045202ec",
+  "position": {
+    "x": 24,
+    "y": 542,
+    "z": 9000,
+    "height": 222,
+    "width": 1872,
+    "tabOrder": 9000
+  },
+  "visual": {
+    "visualType": "pivotTable",
+    "query": {
+      "queryState": {
+        "Rows": {
+          "projections": [
+            {
+              "field": {
+                "HierarchyLevel": {
+                  "Expression": {
+                    "Hierarchy": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "DimLearner"
+                        }
+                      },
+                      "Hierarchy": "Learner"
+                    }
+                  },
+                  "Level": "CohortName"
+                }
+              },
+              "queryRef": "DimLearner.CohortName Hierarchy.CohortName",
+              "nativeQueryRef": "CohortName Hierarchy CohortName",
+              "active": true
+            },
+            {
+              "field": {
+                "HierarchyLevel": {
+                  "Expression": {
+                    "Hierarchy": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "DimLearner"
+                        }
+                      },
+                      "Hierarchy": "Learner"
+                    }
+                  },
+                  "Level": "Track"
+                }
+              },
+              "queryRef": "DimLearner.CohortName Hierarchy.Track",
+              "nativeQueryRef": "CohortName Hierarchy Track",
+              "active": false
+            },
+            {
+              "field": {
+                "HierarchyLevel": {
+                  "Expression": {
+                    "Hierarchy": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "DimLearner"
+                        }
+                      },
+                      "Hierarchy": "Learner"
+                    }
+                  },
+                  "Level": "LearnerName"
+                }
+              },
+              "queryRef": "DimLearner.CohortName Hierarchy.LearnerName",
+              "nativeQueryRef": "CohortName Hierarchy LearnerName",
+              "active": false
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measure"
+                    }
+                  },
+                  "Property": "Graduation Rate"
+                }
+              },
+              "queryRef": "Measure.Graduation Rate",
+              "nativeQueryRef": "Graduation Rate"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measure"
+                    }
+                  },
+                  "Property": "Non-Graduation Rate"
+                }
+              },
+              "queryRef": "Measure.Non-Graduation Rate",
+              "nativeQueryRef": "Non-Graduation Rate"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measure"
+                    }
+                  },
+                  "Property": "Certification Rate"
+                }
+              },
+              "queryRef": "Measure.Certification Rate",
+              "nativeQueryRef": "Certification Rate"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measure"
+                    }
+                  },
+                  "Property": "Attendance Rate"
+                }
+              },
+              "queryRef": "Measure.Attendance Rate",
+              "nativeQueryRef": "Attendance Rate"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measure"
+                    }
+                  },
+                  "Property": "Participation Rate"
+                }
+              },
+              "queryRef": "Measure.Participation Rate",
+              "nativeQueryRef": "Participation Rate"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measure"
+                    }
+                  },
+                  "Property": "Lab Average"
+                }
+              },
+              "queryRef": "Measure.Lab Average",
+              "nativeQueryRef": "Lab Average"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measure"
+                    }
+                  },
+                  "Property": "Quiz Average"
+                }
+              },
+              "queryRef": "Measure.Quiz Average",
+              "nativeQueryRef": "Quiz Average"
+            }
+          ]
+        }
+      }
+    },
+    "expansionStates": [
+      {
+        "roles": [
+          "Rows"
+        ],
+        "levels": [
+          {
+            "queryRefs": [
+              "DimLearner.CohortName Hierarchy.CohortName"
+            ],
+            "isCollapsed": true,
+            "identityKeys": [
+              {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimLearner"
+                    }
+                  },
+                  "Property": "CohortName"
+                }
+              }
+            ],
+            "isPinned": true
+          },
+          {
+            "queryRefs": [
+              "DimLearner.CohortName Hierarchy.Track"
+            ],
+            "isCollapsed": true,
+            "identityKeys": [
+              {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimLearner"
+                    }
+                  },
+                  "Property": "Track"
+                }
+              }
+            ],
+            "isPinned": true
+          },
+          {
+            "queryRefs": [
+              "DimLearner.CohortName Hierarchy.LearnerName"
+            ],
+            "isCollapsed": true,
+            "isPinned": true
+          }
+        ],
+        "root": {}
+      }
+    ],
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Learner Progress by Cohort and Track'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

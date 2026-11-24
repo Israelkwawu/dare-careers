@@ -1,0 +1,69 @@
+table DimCohort
+	lineageTag: 9f4eb94f-b318-4339-9368-21b3f998b28a
+
+	column CohortKey
+		dataType: string
+		lineageTag: e93a4d6c-805f-45f3-84b5-478dffb08af3
+		summarizeBy: none
+		sourceColumn: CohortKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column CohortName
+		dataType: string
+		lineageTag: 0c8d1fb0-0865-4e8f-b690-ddf6f56b9049
+		summarizeBy: none
+		sourceColumn: CohortName
+
+		annotation SummarizationSetBy = Automatic
+
+	column StartDate
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 8193315f-333d-4cb6-a69d-eada9af0f7a4
+		summarizeBy: none
+		sourceColumn: StartDate
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column EndDate
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: c454a5dd-9600-4d9d-a232-bb4c59cbe67a
+		summarizeBy: none
+		sourceColumn: EndDate
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	partition DimCohort = m
+		mode: import
+		source =
+				let
+				    AttDates = Table.SelectColumns(Table.SelectRows(stgAttendanceDay, each [ClassDate] <> null), {"CohortKey", "ClassDate"}),
+				    PartDates = Table.SelectColumns(Table.SelectRows(stgParticipation, each [ClassDate] <> null), {"CohortKey", "ClassDate"}),
+				    Both = Table.Distinct(Table.Combine({AttDates, PartDates})),
+				    Grouped = Table.Group(
+				        Both,
+				        {"CohortKey"},
+				        {
+				            {"StartDate", each List.Min([ClassDate]), type date},
+				            {"EndDate", each List.Max([ClassDate]), type date}
+				        }
+				    ),
+				    Labeled = Table.AddColumn(Grouped, "BaseLabel", each Date.ToText([StartDate], "MMM yyyy", "en-US") & " intake", type text),
+				    Counts = Table.Group(Labeled, {"BaseLabel"}, {{"LabelCount", each Table.RowCount(_), Int64.Type}}),
+				    Joined = Table.NestedJoin(Labeled, {"BaseLabel"}, Counts, {"BaseLabel"}, "C", JoinKind.LeftOuter),
+				    Expanded = Table.ExpandTableColumn(Joined, "C", {"LabelCount"}),
+				    Named = Table.AddColumn(Expanded, "CohortName", each if [LabelCount] > 1 then [BaseLabel] & " (" & [CohortKey] & ")" else [BaseLabel], type text),
+				    Result = Table.SelectColumns(Named, {"CohortKey", "CohortName", "StartDate", "EndDate"})
+				in
+				    Table.Sort(Result, {{"StartDate", Order.Ascending}})
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

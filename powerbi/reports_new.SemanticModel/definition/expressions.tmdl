@@ -1,0 +1,490 @@
+expression pIntakeRoot = "C:\DataEngineering\dare-careers" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: 3906484c-cd8f-453d-8e01-676a9ec20770
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Text
+
+expression fn =
+		[
+		    NormalizeEmail = (e as any) as nullable text =>
+		        let
+		            t = if e = null then null else Text.Lower(Text.Trim(Text.From(e)))
+		        in
+		            if t = null or t = "" then null else t,
+		    NormalizeName = (n as any) as nullable text =>
+		        let
+		            t = if n = null then null else Text.Trim(Text.From(n)),
+		            parts = if t = null or t = "" then {} else List.Select(Text.Split(t, " "), each _ <> "")
+		        in
+		            if List.Count(parts) = 0 then null else Text.Lower(Text.Combine(parts, " ")),
+		    DurationMinutes = (dur as any) as nullable number =>
+		        let
+		            t = if dur = null then "" else Text.Trim(Text.From(dur)),
+		            result =
+		                if t = "" or Text.Lower(t) = "null" then
+		                    null
+		                else if Text.Contains(t, ":") then
+		                    let
+		                        raw = List.Transform(Text.Split(t, ":"), each try Number.FromText(Text.Trim(_)) otherwise null),
+		                        bad = List.AnyTrue(List.Transform(raw, each _ = null)),
+		                        mins =
+		                            if bad then
+		                                null
+		                            else if List.Count(raw) = 3 then
+		                                raw{0} * 60 + raw{1} + raw{2} / 60
+		                            else if List.Count(raw) = 2 then
+		                                raw{0} + raw{1} / 60
+		                            else
+		                                null
+		                    in
+		                        mins
+		                else
+		                    try Number.FromText(t) otherwise try Number.From(dur) otherwise null
+		        in
+		            result,
+		    ParseClassDate = (v as any) as nullable date =>
+		        if v = null then
+		            null
+		        else if Value.Is(v, type date) then
+		            Date.From(v)
+		        else if Value.Is(v, type datetime) then
+		            Date.From(v)
+		        else if Value.Is(v, type datetimezone) then
+		            Date.From(v)
+		        else if Value.Is(v, type number) then
+		            try Date.From(v) otherwise null
+		        else
+		            let
+		                t = Text.Trim(Text.From(v)),
+		                fromName = try Date.FromText(t, [Format = "dd-MMM-yyyy", Culture = "en-US"]) otherwise null,
+		                fromCulture = if fromName <> null then fromName else try Date.FromText(t, [Culture = "en-US"]) otherwise null
+		            in
+		                fromCulture,
+		    WeekFromLabel = (label as any) as nullable number =>
+		        let
+		            t = if label = null then "" else Text.Trim(Text.From(label)),
+		            last = if t = "" then null else List.Last(Text.Split(t, " "))
+		        in
+		            if t = "" then null else try Int64.From(Number.FromText(last)) otherwise null,
+		    TrimHeaders = (tbl as table) as table =>
+		        Table.RenameColumns(tbl, List.Transform(Table.ColumnNames(tbl), each {_, Text.Trim(_)}), MissingField.Ignore),
+		    PickColumn = (tbl as table, wanted as text) as nullable text =>
+		        let
+		            hits = List.Select(Table.ColumnNames(tbl), each Text.Lower(Text.Trim(_)) = Text.Lower(wanted))
+		        in
+		            if List.Count(hits) = 0 then null else hits{0},
+		    ReadExcel = (content as binary) as table =>
+		        let
+		            wb = Excel.Workbook(content, true, true),
+		            sheets = Table.SelectRows(wb, each [Kind] = "Sheet" or [Kind] = "Table")
+		        in
+		            Table.SelectColumns(sheets, {"Name", "Data"}),
+		    TrackName = (folder as any) as nullable text =>
+		        let
+		            t = if folder = null then "" else Text.Trim(Text.From(folder)),
+		            raw = if Text.EndsWith(t, " Training") then Text.BeforeDelimiter(t, " Training") else t
+		        in
+		            if raw = "" then null else if raw = "PowerBI" then "Power BI" else raw,
+		    DisplayFromEmail = (email as any) as nullable text =>
+		        let
+		            e = if email = null then null else Text.From(email),
+		            local = if e = null or not Text.Contains(e, "@") then e else Text.BeforeDelimiter(e, "@"),
+		            spaced = if local = null then null else Text.Trim(Text.Replace(Text.Replace(local, ".", " "), "_", " "))
+		        in
+		            if spaced = null or spaced = "" then null else Text.Proper(spaced)
+		]
+	lineageTag: 94719993-a5d1-47de-9344-36d5a5fd745e
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Record
+
+expression qFiles =
+		let
+		    Source = Folder.Files(pIntakeRoot),
+		    NoLock = Table.SelectRows(Source, each not Text.StartsWith([Name], "~$")),
+		    KeepExt = Table.SelectRows(NoLock, each List.Contains({".csv", ".xlsx", ".xls"}, Text.Lower([Extension]))),
+		    AddParts = Table.AddColumn(KeepExt, "Parts", each List.RemoveItems(Text.Split(Text.Replace([Folder Path], "/", "\"), "\"), {""}), type list),
+		    AddMeta = Table.AddColumn(AddParts, "Meta", each
+		        let
+		            parts = [Parts],
+		            n = List.Count(parts),
+		            immediate = if n < 1 then null else parts{n - 1},
+		            parent = if n < 2 then null else parts{n - 2},
+		            grand = if n < 3 then null else parts{n - 3},
+		            great = if n < 4 then null else parts{n - 4},
+		            isWeek = immediate <> null and Text.StartsWith(Text.Lower(immediate), "week"),
+		            feedFolder = if isWeek then parent else immediate,
+		            feedText = if feedFolder = null then "" else Text.Lower(feedFolder),
+		            feed =
+		                if Text.Contains(feedText, "zoom") or Text.Contains(feedText, "attendance") then "Attendance"
+		                else if Text.Contains(feedText, "participation") then "Participation"
+		                else if Text.Contains(feedText, "lab") then "Assessment"
+		                else if Text.Contains(feedText, "status") then "Status"
+		                else null,
+		            week = if isWeek then fn[WeekFromLabel](immediate) else null
+		        in
+		            [
+		                FeedKey = feed,
+		                CohortKey = if isWeek then great else grand,
+		                Track = fn[TrackName](if isWeek then grand else parent),
+		                WeekNumber = week,
+		                FolderPath = [Folder Path]
+		            ]
+		    ),
+		    Expanded = Table.ExpandRecordColumn(AddMeta, "Meta", {"FeedKey", "CohortKey", "Track", "WeekNumber", "FolderPath"}),
+		    Scoped = Table.SelectRows(Expanded, each [FeedKey] <> null and [CohortKey] <> null and [Track] <> null),
+		    Slim = Table.SelectColumns(Scoped, {"Content", "Name", "Extension", "FeedKey", "CohortKey", "Track", "WeekNumber", "FolderPath"})
+		in
+		    Table.Buffer(Slim)
+	lineageTag: 23972470-1b8d-430c-9e56-6c0ee49e0d24
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+expression stgAttendance =
+		let
+		    Files = Table.SelectRows(qFiles, each [FeedKey] = "Attendance" and Text.Lower([Extension]) = ".csv"),
+		    Empty = #table(
+		        type table [
+		            CohortKey = text, Track = text, WeekFromFolder = Int64.Type, ClassDate = date,
+		            Email = text, LearnerName = text, DurationMinutes = number, SourceFile = text, RowUse = text
+		        ],
+		        {}
+		    ),
+		    ReadOne = (row as record) as table =>
+		        let
+		            csv = Csv.Document(row[Content], [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+		            promoted = fn[TrimHeaders](Table.PromoteHeaders(csv, [PromoteAllScalars = true])),
+		            cName = fn[PickColumn](promoted, "Name"),
+		            cEmail = fn[PickColumn](promoted, "Email"),
+		            cDur = fn[PickColumn](promoted, "Duration"),
+		            cRole = fn[PickColumn](promoted, "Role"),
+		            classDate = fn[ParseClassDate](Text.BeforeDelimiter(row[Name], ".")),
+		            sourceFile = row[FolderPath] & row[Name],
+		            shaped =
+		                if cEmail = null or cDur = null then
+		                    error "Live-class file is missing Email or Duration: " & sourceFile
+		                else
+		                    let
+		                        selected = Table.SelectColumns(promoted, List.RemoveNulls({cName, cEmail, cDur, cRole})),
+		                        renamed = Table.RenameColumns(
+		                            selected,
+		                            List.RemoveNulls({
+		                                if cName = null then null else {cName, "LearnerName"},
+		                                {cEmail, "Email"},
+		                                {cDur, "DurationRaw"},
+		                                if cRole = null then null else {cRole, "Role"}
+		                            })
+		                        ),
+		                        withName = if Table.HasColumns(renamed, "LearnerName") then renamed else Table.AddColumn(renamed, "LearnerName", each null, type text),
+		                        withRole = if Table.HasColumns(withName, "Role") then withName else Table.AddColumn(withName, "Role", each "Participant", type text)
+		                    in
+		                        withRole,
+		            tagged = Table.AddColumn(shaped, "CohortKey", each row[CohortKey], type text),
+		            tagged2 = Table.AddColumn(tagged, "Track", each row[Track], type text),
+		            tagged3 = Table.AddColumn(tagged2, "WeekFromFolder", each row[WeekNumber], Int64.Type),
+		            tagged4 = Table.AddColumn(tagged3, "ClassDate", each classDate, type date),
+		            tagged5 = Table.AddColumn(tagged4, "SourceFile", each sourceFile, type text)
+		        in
+		            tagged5,
+		    Combined = if Table.IsEmpty(Files) then null else Table.Combine(List.Transform(Table.ToRecords(Files), each ReadOne(_))),
+		    AddEmail = if Combined = null then null else Table.AddColumn(Combined, "EmailKey", each fn[NormalizeEmail](try [Email] otherwise null), type text),
+		    AddMinutes = Table.AddColumn(AddEmail, "DurationMinutes", each fn[DurationMinutes](try [DurationRaw] otherwise null), type number),
+		    AddUse = Table.AddColumn(AddMinutes, "RowUse", each
+		        let
+		            role = if [Role] = null then "" else Text.Lower(Text.Trim(Text.From([Role]))),
+		            roleOk = role = "" or role = "participant"
+		        in
+		            if not roleOk then "Not a learner"
+		            else if [EmailKey] = null or [ClassDate] = null then "No identity"
+		            else if [DurationMinutes] = null then "Bad duration"
+		            else "Keep",
+		        type text
+		    ),
+		    Renamed = Table.RenameColumns(AddUse, {{"EmailKey", "EmailNorm"}}),
+		    Projected = if AddEmail = null then Empty else Table.SelectColumns(Renamed, {"CohortKey", "Track", "WeekFromFolder", "ClassDate", "EmailNorm", "LearnerName", "DurationMinutes", "SourceFile", "RowUse"})
+		in
+		    if AddEmail = null then Empty else Table.RenameColumns(Projected, {{"EmailNorm", "Email"}})
+	lineageTag: e4b7fe74-630a-47ff-aa81-75fd573bcf5d
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+expression stgAttendanceDay =
+		let
+		    Keep = Table.SelectRows(stgAttendance, each [RowUse] = "Keep" or [RowUse] = "Bad duration"),
+		    Grouped = Table.Group(
+		        Keep,
+		        {"CohortKey", "Track", "Email", "ClassDate"},
+		        {
+		            {"WeekFromFolder", each List.Min(List.RemoveNulls([WeekFromFolder])), Int64.Type},
+		            {"WeekChoices", each List.Count(List.Distinct(List.RemoveNulls([WeekFromFolder]))), Int64.Type},
+		            {"DurationMinutes", each List.Sum(List.RemoveNulls([DurationMinutes])), type number},
+		            {"LearnerName", each let ns = List.RemoveNulls([LearnerName]) in if List.IsEmpty(ns) then null else ns{0}, type text},
+		            {"SourceFile", each let ns = List.RemoveNulls([SourceFile]) in if List.IsEmpty(ns) then null else ns{0}, type text}
+		        }
+		    )
+		in
+		    Grouped
+	lineageTag: d5b657fd-c86f-4ee5-a988-2ed70b1de181
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+expression stgParticipation =
+		let
+		    Files = Table.SelectRows(qFiles, each [FeedKey] = "Participation" and (Text.Lower([Extension]) = ".xlsx" or Text.Lower([Extension]) = ".xls")),
+		    Empty = #table(
+		        type table [CohortKey = text, Track = text, ClassDate = date, RawName = text, NameKey = text, SourceFile = text, DateProblem = text],
+		        {}
+		    ),
+		    ReadOne = (row as record) as table =>
+		        let
+		            sheets = fn[ReadExcel](row[Content]),
+		            sourceFile = row[FolderPath] & row[Name],
+		            ReadSheet = (sheet as record) as table =>
+		                let
+		                    data = fn[TrimHeaders](sheet[Data]),
+		                    cDate = fn[PickColumn](data, "Date"),
+		                    cPeople = fn[PickColumn](data, "Participants"),
+		                    emptySheet = #table(type table [CohortKey = text, Track = text, ClassDate = date, RawName = text, NameKey = text, SourceFile = text, DateProblem = text], {}),
+		                    out =
+		                        if cDate = null or cPeople = null then
+		                            emptySheet
+		                        else
+		                            let
+		                                projected = Table.RenameColumns(Table.SelectColumns(data, {cDate, cPeople}), {{cDate, "DateRaw"}, {cPeople, "PeopleRaw"}}),
+		                                dated = Table.AddColumn(projected, "ClassDate", each fn[ParseClassDate]([DateRaw]), type date),
+		                                marked = Table.AddColumn(dated, "DateProblem", each if [DateRaw] = null or Text.Trim(Text.From([DateRaw])) = "" then null else if [ClassDate] = null then "Participation date could not be read" else null, type text),
+		                                split = Table.AddColumn(marked, "Token", each
+		                                    let
+		                                        raw = if [PeopleRaw] = null then {} else Text.Split(Text.From([PeopleRaw]), ","),
+		                                        cleaned = List.Select(List.Transform(raw, each Text.Trim(_)), each _ <> "")
+		                                    in
+		                                        cleaned,
+		                                    type list
+		                                ),
+		                                expanded = Table.ExpandListColumn(split, "Token"),
+		                                named = Table.AddColumn(expanded, "RawName", each if [Token] = null or [Token] = "" then null else [Token], type text),
+		                                keyed = Table.AddColumn(named, "NameKey", each fn[NormalizeName]([RawName]), type text),
+		                                tagged = Table.AddColumn(keyed, "CohortKey", each row[CohortKey], type text),
+		                                tagged2 = Table.AddColumn(tagged, "Track", each row[Track], type text),
+		                                tagged3 = Table.AddColumn(tagged2, "SourceFile", each sourceFile, type text),
+		                                kept = Table.SelectRows(tagged3, each [RawName] <> null or [DateProblem] <> null)
+		                            in
+		                                Table.SelectColumns(kept, {"CohortKey", "Track", "ClassDate", "RawName", "NameKey", "SourceFile", "DateProblem"})
+		                in
+		                    out,
+		            stacked = if Table.IsEmpty(sheets) then #table(type table [CohortKey = text, Track = text, ClassDate = date, RawName = text, NameKey = text, SourceFile = text, DateProblem = text], {}) else Table.Combine(List.Transform(Table.ToRecords(sheets), each ReadSheet(_)))
+		        in
+		            stacked,
+		    Combined = if Table.IsEmpty(Files) then Empty else Table.Combine(List.Transform(Table.ToRecords(Files), each ReadOne(_)))
+		in
+		    Table.SelectRows(Combined, each [RawName] <> null or [DateProblem] <> null)
+	lineageTag: 26d14135-e9bc-4ced-8697-8572a6f2f034
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+expression stgAssessment =
+		let
+		    Files = Table.SelectRows(qFiles, each [FeedKey] = "Assessment" and (Text.Lower([Extension]) = ".xlsx" or Text.Lower([Extension]) = ".xls")),
+		    Empty = #table(
+		        type table [CohortKey = text, Track = text, Email = text, WeekNumber = Int64.Type, AssessmentType = text, Score = number, ScoreProblem = text, SourceFile = text],
+		        {}
+		    ),
+		    ReadOne = (row as record) as table =>
+		        let
+		            sheets = fn[ReadExcel](row[Content]),
+		            sourceFile = row[FolderPath] & row[Name],
+		            blank = #table(type table [CohortKey = text, Track = text, Email = text, WeekNumber = Int64.Type, AssessmentType = text, Score = number, ScoreProblem = text, SourceFile = text], {}),
+		            ReadSheet = (sheet as record) as table =>
+		                let
+		                    data = fn[TrimHeaders](sheet[Data]),
+		                    cEmail = fn[PickColumn](data, "Email"),
+		                    weekCols = List.Select(Table.ColumnNames(data), each Text.StartsWith(Text.Lower(Text.Trim(_)), "week")),
+		                    kindText = Text.Lower(Text.From(sheet[Name])),
+		                    kind = if Text.Contains(kindText, "quiz") then "Quiz" else if Text.Contains(kindText, "lab") then "Lab" else null,
+		                    emptySheet = #table(type table [CohortKey = text, Track = text, Email = text, WeekNumber = Int64.Type, AssessmentType = text, Score = number, ScoreProblem = text, SourceFile = text], {}),
+		                    out =
+		                        if cEmail = null or List.IsEmpty(weekCols) or kind = null then
+		                            emptySheet
+		                        else
+		                            let
+		                                slim = Table.SelectColumns(data, List.Combine({{cEmail}, weekCols})),
+		                                renamed = Table.RenameColumns(slim, {{cEmail, "Email"}}),
+		                                unpivoted = Table.Unpivot(renamed, weekCols, "WeekLabel", "ScoreRaw"),
+		                                typed = Table.AddColumn(unpivoted, "EmailKey", each fn[NormalizeEmail]([Email]), type text),
+		                                weeked = Table.AddColumn(typed, "WeekNumber", each fn[WeekFromLabel]([WeekLabel]), Int64.Type),
+		                                scored = Table.AddColumn(weeked, "Score", each
+		                                    if [ScoreRaw] = null then null
+		                                    else if Value.Is([ScoreRaw], type number) then Number.From([ScoreRaw])
+		                                    else if Text.Trim(Text.From([ScoreRaw])) = "" then null
+		                                    else try Number.FromText(Text.Trim(Text.From([ScoreRaw]))) otherwise null,
+		                                    type number
+		                                ),
+		                                problem = Table.AddColumn(scored, "ScoreProblem", each
+		                                    if [Score] = null then
+		                                        if [ScoreRaw] = null then null
+		                                        else if Text.Trim(Text.From([ScoreRaw])) = "" then null
+		                                        else "Assessment score could not be read"
+		                                    else
+		                                        null,
+		                                    type text
+		                                ),
+		                                tagged = Table.AddColumn(problem, "CohortKey", each row[CohortKey], type text),
+		                                tagged2 = Table.AddColumn(tagged, "Track", each row[Track], type text),
+		                                tagged3 = Table.AddColumn(tagged2, "AssessmentType", each kind, type text),
+		                                tagged4 = Table.AddColumn(tagged3, "SourceFile", each sourceFile, type text)
+		                            in
+		                                Table.SelectColumns(tagged4, {"CohortKey", "Track", "EmailKey", "WeekNumber", "AssessmentType", "Score", "ScoreProblem", "SourceFile"})
+		                in
+		                    if Table.HasColumns(out, "EmailKey") then Table.RenameColumns(out, {{"EmailKey", "Email"}}) else out,
+		            stacked = if Table.IsEmpty(sheets) then blank else Table.Combine(List.Transform(Table.ToRecords(sheets), each ReadSheet(_)))
+		        in
+		            stacked,
+		    Combined = if Table.IsEmpty(Files) then Empty else Table.Combine(List.Transform(Table.ToRecords(Files), each ReadOne(_)))
+		in
+		    Table.SelectRows(Combined, each [Email] <> null and ([WeekNumber] <> null or [ScoreProblem] <> null))
+	lineageTag: f47bfd60-7f94-4b01-9c06-1f8f9086eefc
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+expression stgStatus =
+		let
+		    Files = Table.SelectRows(qFiles, each [FeedKey] = "Status" and (Text.Lower([Extension]) = ".xlsx" or Text.Lower([Extension]) = ".xls")),
+		    Empty = #table(type table [CohortKey = text, Track = text, Email = text, GraduationStatus = text, CertificationStatus = text, SourceFile = text], {}),
+		    ReadOne = (row as record) as table =>
+		        let
+		            sheets = fn[ReadExcel](row[Content]),
+		            sourceFile = row[FolderPath] & row[Name],
+		            ReadSheet = (sheet as record) as table =>
+		                let
+		                    data = fn[TrimHeaders](sheet[Data]),
+		                    cEmail = fn[PickColumn](data, "Email"),
+		                    gradHits = List.Select(Table.ColumnNames(data), each Text.Contains(Text.Lower(_), "graduation")),
+		                    certHits = List.Select(Table.ColumnNames(data), each Text.Contains(Text.Lower(_), "certification")),
+		                    emptySheet = #table(type table [CohortKey = text, Track = text, Email = text, GraduationStatus = text, CertificationStatus = text, SourceFile = text], {}),
+		                    out =
+		                        if cEmail = null or List.IsEmpty(gradHits) then
+		                            emptySheet
+		                        else
+		                            let
+		                                cGrad = gradHits{0},
+		                                cCert = if List.IsEmpty(certHits) then null else certHits{0},
+		                                cols = List.RemoveNulls({cEmail, cGrad, cCert}),
+		                                slim = Table.SelectColumns(data, cols),
+		                                renamed = Table.RenameColumns(slim, List.RemoveNulls({{cEmail, "Email"}, {cGrad, "GraduationStatus"}, if cCert = null then null else {cCert, "CertificationStatus"}})),
+		                                withCert = if Table.HasColumns(renamed, "CertificationStatus") then renamed else Table.AddColumn(renamed, "CertificationStatus", each null, type text),
+		                                cleaned = Table.AddColumn(withCert, "EmailKey", each fn[NormalizeEmail]([Email]), type text),
+		                                tagged = Table.AddColumn(cleaned, "CohortKey", each row[CohortKey], type text),
+		                                tagged2 = Table.AddColumn(tagged, "Track", each row[Track], type text),
+		                                tagged3 = Table.AddColumn(tagged2, "SourceFile", each sourceFile, type text),
+		                                kept = Table.SelectRows(tagged3, each [EmailKey] <> null)
+		                            in
+		                                Table.RenameColumns(Table.SelectColumns(kept, {"CohortKey", "Track", "EmailKey", "GraduationStatus", "CertificationStatus", "SourceFile"}), {{"EmailKey", "Email"}})
+		                in
+		                    out,
+		            stacked = if Table.IsEmpty(sheets) then #table(type table [CohortKey = text, Track = text, Email = text, GraduationStatus = text, CertificationStatus = text, SourceFile = text], {}) else Table.Combine(List.Transform(Table.ToRecords(sheets), each ReadSheet(_)))
+		        in
+		            stacked,
+		    Combined = if Table.IsEmpty(Files) then Empty else Table.Combine(List.Transform(Table.ToRecords(Files), each ReadOne(_)))
+		in
+		    Combined
+	lineageTag: e5371b75-5b3b-4ad0-b480-8cd86d4dccfc
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+expression stgCohortAnchor =
+		let
+		    AttDates = Table.SelectColumns(Table.SelectRows(stgAttendanceDay, each [ClassDate] <> null), {"CohortKey", "ClassDate"}),
+		    PartDates = Table.SelectColumns(Table.SelectRows(stgParticipation, each [ClassDate] <> null), {"CohortKey", "ClassDate"}),
+		    Both = Table.Distinct(Table.Combine({AttDates, PartDates})),
+		    Grouped = Table.Group(Both, {"CohortKey"}, {{"FirstClass", each List.Min([ClassDate]), type date}}),
+		    Monday = Table.AddColumn(Grouped, "StartMonday", each Date.AddDays([FirstClass], - Date.DayOfWeek([FirstClass], Day.Monday)), type date)
+		in
+		    Monday
+	lineageTag: 1fd51c7c-d9ab-4235-a927-59e4ba4c95f9
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+expression stgParticipationMatched =
+		let
+		    Lookup = Table.Group(
+		        Table.SelectRows(DimLearner, each [NameKey] <> null),
+		        {"CohortKey", "Track", "NameKey"},
+		        {
+		            {"MatchCount", each List.Count(List.Distinct([LearnerKey])), Int64.Type},
+		            {"LearnerKey", each let keys = List.Distinct([LearnerKey]) in if List.Count(keys) = 1 then keys{0} else null, type text}
+		        }
+		    ),
+		    Joined = Table.NestedJoin(stgParticipation, {"CohortKey", "Track", "NameKey"}, Lookup, {"CohortKey", "Track", "NameKey"}, "L", JoinKind.LeftOuter),
+		    Expanded = Table.ExpandTableColumn(Joined, "L", {"MatchCount", "LearnerKey"}),
+		    Status = Table.AddColumn(Expanded, "MatchStatus", each
+		        if [RawName] = null then "No name"
+		        else if [MatchCount] = null or [MatchCount] = 0 then "Unmatched"
+		        else if [MatchCount] > 1 then "Ambiguous"
+		        else "Matched",
+		        type text
+		    )
+		in
+		    Status
+	lineageTag: aecd2eae-0f98-41a1-b5fb-e2964d71b851
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+expression stgClassWeek =
+		let
+		    Att = Table.Group(
+		        Table.SelectRows(stgAttendanceDay, each [ClassDate] <> null),
+		        {"CohortKey", "Track", "ClassDate"},
+		        {
+		            {"WeekFromFolder", each List.Min(List.RemoveNulls([WeekFromFolder])), Int64.Type},
+		            {"WeekChoices", each List.Count(List.Distinct(List.RemoveNulls([WeekFromFolder]))), Int64.Type}
+		        }
+		    ),
+		    AttFeed = Table.AddColumn(Att, "Feed", each "Attendance", type text),
+		    AttMap = Table.Group(
+		        Table.SelectRows(Att, each [WeekFromFolder] <> null),
+		        {"CohortKey", "ClassDate"},
+		        {{"MappedWeek", each List.Min([WeekFromFolder]), Int64.Type}}
+		    ),
+		    Part = Table.Distinct(Table.SelectColumns(Table.SelectRows(stgParticipation, each [ClassDate] <> null), {"CohortKey", "Track", "ClassDate"})),
+		    PartJoin = Table.NestedJoin(Part, {"CohortKey", "ClassDate"}, AttMap, {"CohortKey", "ClassDate"}, "M", JoinKind.LeftOuter),
+		    PartExp = Table.ExpandTableColumn(PartJoin, "M", {"MappedWeek"}),
+		    PartFeed = Table.AddColumn(PartExp, "Feed", each "Participation", type text),
+		    PartFeed2 = Table.AddColumn(PartFeed, "WeekFromFolder", each [MappedWeek], Int64.Type),
+		    PartFeed3 = Table.AddColumn(PartFeed2, "WeekChoices", each 1, Int64.Type),
+		    AttSlim = Table.SelectColumns(AttFeed, {"CohortKey", "Track", "ClassDate", "WeekFromFolder", "WeekChoices", "Feed"}),
+		    PartSlim = Table.SelectColumns(PartFeed3, {"CohortKey", "Track", "ClassDate", "WeekFromFolder", "WeekChoices", "Feed"}),
+		    Stacked = Table.Combine({AttSlim, PartSlim}),
+		    Anchored = Table.NestedJoin(Stacked, {"CohortKey"}, stgCohortAnchor, {"CohortKey"}, "A", JoinKind.LeftOuter),
+		    AnchorExp = Table.ExpandTableColumn(Anchored, "A", {"StartMonday"}),
+		    Filled = Table.AddColumn(AnchorExp, "FallbackWeek", each
+		        if [ClassDate] = null or [StartMonday] = null then null
+		        else Int64.From(1 + Number.IntegerDivide(Duration.Days([ClassDate] - [StartMonday]), 7)),
+		        Int64.Type
+		    ),
+		    Week = Table.AddColumn(Filled, "WeekNumber", each if [WeekFromFolder] <> null then [WeekFromFolder] else [FallbackWeek], Int64.Type)
+		in
+		    Table.SelectColumns(Week, {"CohortKey", "Track", "ClassDate", "WeekNumber", "WeekChoices", "Feed"})
+	lineageTag: 5defcae4-b6d9-4e5a-b1b0-9eabbc2db22c
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

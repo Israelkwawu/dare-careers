@@ -1,0 +1,81 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "334bc82a3305248a5981",
+  "position": {
+    "x": 964,
+    "y": 818,
+    "z": 10000,
+    "height": 238,
+    "width": 932,
+    "tabOrder": 10000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DataExceptions"
+                    }
+                  },
+                  "Property": "RawName"
+                }
+              },
+              "queryRef": "DataExceptions.RawName",
+              "nativeQueryRef": "RawName"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DataExceptions"
+                    }
+                  },
+                  "Property": "Reason"
+                }
+              },
+              "queryRef": "DataExceptions.Reason",
+              "nativeQueryRef": "Reason"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DataExceptions"
+                    }
+                  },
+                  "Property": "ClassDate"
+                }
+              },
+              "queryRef": "DataExceptions.ClassDate",
+              "nativeQueryRef": "ClassDate"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Data Quality Exceptions'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

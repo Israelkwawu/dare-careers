@@ -1,0 +1,127 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "db2937f084d1c5b223c7",
+  "position": {
+    "x": 24,
+    "y": 818,
+    "z": 8000,
+    "height": 238,
+    "width": 924,
+    "tabOrder": 9000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "RuleBook"
+                    }
+                  },
+                  "Property": "Signal"
+                }
+              },
+              "queryRef": "RuleBook.Signal",
+              "nativeQueryRef": "Signal"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "RuleBook"
+                    }
+                  },
+                  "Property": "Bar"
+                }
+              },
+              "queryRef": "RuleBook.Bar",
+              "nativeQueryRef": "Bar"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "RuleBook"
+                    }
+                  },
+                  "Property": "Applies"
+                }
+              },
+              "queryRef": "RuleBook.Applies",
+              "nativeQueryRef": "Applies"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Call Rules'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "8a22c6cd323458222400",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "RuleBook"
+              }
+            },
+            "Property": "Signal"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "e1af2f68d2030d925d50",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "RuleBook"
+              }
+            },
+            "Property": "Bar"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "071ef73b791a464a5286",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "RuleBook"
+              }
+            },
+            "Property": "Applies"
+          }
+        },
+        "type": "Categorical"
+      }
+    ]
+  }
+}

@@ -1,0 +1,232 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "e3a2cd15063651963154",
+  "position": {
+    "x": 24,
+    "y": 290,
+    "z": 1007,
+    "height": 766,
+    "width": 1872,
+    "tabOrder": 6000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimProgramWeek"
+                    }
+                  },
+                  "Property": "WeekLabel"
+                }
+              },
+              "queryRef": "DimProgramWeek.WeekLabel",
+              "nativeQueryRef": "WeekLabel"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measure"
+                    }
+                  },
+                  "Property": "Week Attendance Rate"
+                }
+              },
+              "queryRef": "Measure.Week Attendance Rate",
+              "nativeQueryRef": "Week Attendance Rate"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measure"
+                    }
+                  },
+                  "Property": "Week Participation Rate"
+                }
+              },
+              "queryRef": "Measure.Week Participation Rate",
+              "nativeQueryRef": "Week Participation Rate"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measure"
+                    }
+                  },
+                  "Property": "Week Lab Average"
+                }
+              },
+              "queryRef": "Measure.Week Lab Average",
+              "nativeQueryRef": "Week Lab Average"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measure"
+                    }
+                  },
+                  "Property": "Week Quiz Average"
+                }
+              },
+              "queryRef": "Measure.Week Quiz Average",
+              "nativeQueryRef": "Week Quiz Average"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Weekly Attendance & Assessment History'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "93651ebd79e0edb2a1d0",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "DimProgramWeek"
+              }
+            },
+            "Property": "WeekLabel"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "3aa4b644c43a5c121234",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measure"
+              }
+            },
+            "Property": "Week Attendance Rate"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "47e4d93c4200dc4b762a",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measure"
+              }
+            },
+            "Property": "Week Participation Rate"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "58738be1873cb3c7a3e3",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measure"
+              }
+            },
+            "Property": "Week Lab Average"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "9296720d9cc043c84d79",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measure"
+              }
+            },
+            "Property": "Week Quiz Average"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "848f5bc801219a612ea2",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measure"
+              }
+            },
+            "Property": "Week Is On Or Before As Of"
+          }
+        },
+        "type": "Advanced",
+        "filter": {
+          "Version": 2,
+          "From": [
+            {
+              "Name": "m",
+              "Entity": "Measure",
+              "Type": 0
+            }
+          ],
+          "Where": [
+            {
+              "Condition": {
+                "Comparison": {
+                  "ComparisonKind": 0,
+                  "Left": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Source": "m"
+                        }
+                      },
+                      "Property": "Week Is On Or Before As Of"
+                    }
+                  },
+                  "Right": {
+                    "Literal": {
+                      "Value": "1L"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "howCreated": "User"
+      }
+    ]
+  }
+}

@@ -1,0 +1,81 @@
+table FactAttendance
+	lineageTag: d21e4794-51ed-4dc7-837e-2b817826d00f
+
+	column LearnerKey
+		dataType: string
+		lineageTag: a5437319-ab8b-4297-af42-ceae8618d0c9
+		summarizeBy: none
+		sourceColumn: LearnerKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column ProgramWeekKey
+		dataType: string
+		lineageTag: fdd59c63-035c-47b5-b534-b45736e5d1ed
+		summarizeBy: none
+		sourceColumn: ProgramWeekKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column WeekNumber
+		dataType: int64
+		formatString: 0
+		lineageTag: 4b55a4e4-0e61-4c6b-886a-d27f1bb95a24
+		summarizeBy: sum
+		sourceColumn: WeekNumber
+
+		annotation SummarizationSetBy = Automatic
+
+	column ClassDate
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 9cd6d3fd-683e-4af5-9b21-28273e7185d2
+		summarizeBy: none
+		sourceColumn: ClassDate
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column DurationMinutes
+		dataType: double
+		lineageTag: 19d3d8bc-9d50-4a45-8e50-8749e6686e07
+		summarizeBy: sum
+		sourceColumn: DurationMinutes
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Attended
+		dataType: int64
+		formatString: 0
+		lineageTag: 388635dd-5d88-4d1f-b032-3d002311985d
+		summarizeBy: sum
+		sourceColumn: Attended
+
+		annotation SummarizationSetBy = Automatic
+
+	partition FactAttendance = m
+		mode: import
+		source =
+				let
+				    Days = Table.SelectRows(stgClassWeek, each [Feed] = "Attendance" and [WeekNumber] <> null),
+				    DaySlim = Table.AddColumn(Table.SelectColumns(Days, {"CohortKey", "Track", "ClassDate", "WeekNumber"}), "CohortTrack", each [CohortKey] & "|" & [Track], type text),
+				    People = Table.AddColumn(Table.SelectColumns(DimLearner, {"LearnerKey", "CohortKey", "Track", "Email"}), "CohortTrack", each [CohortKey] & "|" & [Track], type text),
+				    Nested = Table.NestedJoin(DaySlim, {"CohortTrack"}, People, {"CohortTrack"}, "L", JoinKind.LeftOuter),
+				    Grid = Table.ExpandTableColumn(Nested, "L", {"LearnerKey", "Email"}),
+				    GridKept = Table.SelectRows(Grid, each [LearnerKey] <> null),
+				    Actual = Table.SelectColumns(stgAttendanceDay, {"CohortKey", "Track", "Email", "ClassDate", "DurationMinutes"}),
+				    Joined = Table.NestedJoin(GridKept, {"CohortKey", "Track", "Email", "ClassDate"}, Actual, {"CohortKey", "Track", "Email", "ClassDate"}, "A", JoinKind.LeftOuter),
+				    Expanded = Table.ExpandTableColumn(Joined, "A", {"DurationMinutes"}),
+				    Att = Table.AddColumn(Expanded, "Attended", each if [DurationMinutes] = null then 0 else if [DurationMinutes] > 30 then 1 else 0, Int64.Type),
+				    Keyed = Table.AddColumn(Att, "ProgramWeekKey", each [CohortKey] & "|" & Text.From([WeekNumber]), type text),
+				    Result = Table.SelectColumns(Keyed, {"LearnerKey", "ProgramWeekKey", "WeekNumber", "ClassDate", "DurationMinutes", "Attended"})
+				in
+				    Table.TransformColumnTypes(Result, {{"WeekNumber", Int64.Type}, {"ClassDate", type date}, {"DurationMinutes", type number}, {"Attended", Int64.Type}})
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

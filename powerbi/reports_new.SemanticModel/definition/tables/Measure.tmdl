@@ -1,0 +1,717 @@
+table Measure
+	lineageTag: 6d8e8ef0-b731-454b-8d44-d96c341e10a7
+
+	measure 'As Of Week Number' = ```
+			
+			VAR Selected = SELECTEDVALUE ( AsOfWeek[WeekNumber] )
+			VAR Cohorts = VALUES ( DimLearner[CohortKey] )
+			VAR Latest =
+			    CALCULATE (
+			        MAX ( DimProgramWeek[WeekNumber] ),
+			        REMOVEFILTERS ( DimProgramWeek ),
+			        TREATAS ( Cohorts, DimProgramWeek[CohortKey] )
+			    )
+			RETURN
+			    IF ( NOT ISBLANK ( Selected ), Selected, Latest )
+			
+			```
+		formatString: 0
+		lineageTag: 740de68a-cb8b-4643-a37f-7e199d8c7e45
+
+	measure Learners = COUNTROWS ( DimLearner )
+		formatString: 0
+		lineageTag: 475d0139-6775-4117-9b34-16173cfa78a8
+
+	measure 'Learners With Outcome' =
+			
+			CALCULATE (
+			    COUNTROWS ( DimLearner ),
+			    NOT ISBLANK ( DimLearner[GraduationStatus] )
+			)
+		formatString: 0
+		lineageTag: 76ed7ebd-8378-4732-a8ab-f78df484180c
+
+	measure Graduates = ```
+			
+			CALCULATE (
+			    COUNTROWS ( DimLearner ),
+			    DimLearner[GraduationStatus] = "Graduate"
+			)
+			
+			```
+		formatString: 0
+		lineageTag: 0f2f5074-3ac3-407c-b9d3-c18ca0f4402b
+
+	measure Non-Graduates =
+			
+			CALCULATE (
+			    COUNTROWS ( DimLearner ),
+			    DimLearner[GraduationStatus] = "Non Graduate"
+			)
+		formatString: 0
+		lineageTag: 4bc1bacb-3e2c-4e8c-8c5d-1e2b6ba898d0
+
+	measure 'Certified Learners' = ```
+			
+			CALCULATE (
+			    COUNTROWS ( DimLearner ),
+			    DimLearner[CertificationStatus] = "Certified"
+			)
+			
+			```
+		formatString: 0
+		lineageTag: 90f53d3c-7f86-4ff3-8866-009f9a935073
+
+	measure 'Graduation Rate' = ```
+			
+			DIVIDE ( [Graduates], [Learners With Outcome] )
+			
+			```
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: cd4ba710-058c-454d-b423-29b7496a5864
+
+	measure 'Non-Graduation Rate' =
+			
+			DIVIDE ( [Non-Graduates], [Learners With Outcome] )
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 3c43f005-927f-443a-80af-9e398633c21b
+
+	measure 'Certification Rate' = ```
+			
+			DIVIDE ( [Certified Learners], [Learners With Outcome] )
+			
+			```
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: c842e276-e552-4b0f-8645-7591faf7a559
+
+	measure 'Attendance Rate' = ```
+			
+			DIVIDE ( SUM ( FactAttendance[Attended] ), COUNTROWS ( FactAttendance ) )
+			
+			```
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: a2cc958b-1de3-4735-a324-d1dd3ff63b9d
+
+	measure 'Participation Rate' = ```
+			
+			DIVIDE ( SUM ( FactParticipation[Participated] ), COUNTROWS ( FactParticipation ) )
+			
+			```
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 54531367-8ad5-46e1-b584-da3f616ea2c9
+
+	measure 'Lab Average' =
+			
+			CALCULATE (
+			    AVERAGE ( FactAssessment[Score] ),
+			    FactAssessment[AssessmentType] = "Lab"
+			)
+		formatString: 0.00
+		lineageTag: 4cfe1c45-8a42-4be3-a23a-b60e49d700e0
+
+	measure 'Quiz Average' = ```
+			
+			CALCULATE (
+			    AVERAGE ( FactAssessment[Score] ),
+			    FactAssessment[AssessmentType] = "Quiz"
+			)
+			
+			```
+		formatString: 0.00
+		lineageTag: 13b29cca-6eb9-4201-9ec0-5c3f4b4637bd
+
+	measure 'Trailing Attendance Rate' = ```
+			
+			VAR AsOf = [As Of Week Number]
+			VAR StartW = MAX ( 1, AsOf - 1 )
+			RETURN
+			    CALCULATE (
+			        DIVIDE ( SUM ( FactAttendance[Attended] ), COUNTROWS ( FactAttendance ) ),
+			        REMOVEFILTERS ( DimProgramWeek ),
+			        DimProgramWeek[WeekNumber] >= StartW,
+			        DimProgramWeek[WeekNumber] <= AsOf
+			    )
+			
+			```
+		lineageTag: 99e1616b-8cbc-40dc-8701-54aeac523636
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Trailing Participation Rate' = ```
+			
+			VAR AsOf = [As Of Week Number]
+			VAR StartW = MAX ( 1, AsOf - 1 )
+			RETURN
+			    CALCULATE (
+			        DIVIDE ( SUM ( FactParticipation[Participated] ), COUNTROWS ( FactParticipation ) ),
+			        REMOVEFILTERS ( DimProgramWeek ),
+			        DimProgramWeek[WeekNumber] >= StartW,
+			        DimProgramWeek[WeekNumber] <= AsOf
+			    )
+			
+			```
+		lineageTag: 7a0f8a2c-dd6d-46dd-8d9e-132e564bf2b9
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Trailing Lab Average' = ```
+			
+			VAR AsOf = [As Of Week Number]
+			VAR StartW = MAX ( 1, AsOf - 1 )
+			RETURN
+			    CALCULATE (
+			        CALCULATE ( AVERAGE ( FactAssessment[Score] ), FactAssessment[AssessmentType] = "Lab" ),
+			        REMOVEFILTERS ( DimProgramWeek ),
+			        DimProgramWeek[WeekNumber] >= StartW,
+			        DimProgramWeek[WeekNumber] <= AsOf
+			    )
+			
+			```
+		lineageTag: ca3763ee-7c69-4c9a-933a-b6e1b9c4edfc
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Trailing Quiz Average' = ```
+			
+			VAR AsOf = [As Of Week Number]
+			VAR StartW = MAX ( 1, AsOf - 1 )
+			RETURN
+			    CALCULATE (
+			        CALCULATE ( AVERAGE ( FactAssessment[Score] ), FactAssessment[AssessmentType] = "Quiz" ),
+			        REMOVEFILTERS ( DimProgramWeek ),
+			        DimProgramWeek[WeekNumber] >= StartW,
+			        DimProgramWeek[WeekNumber] <= AsOf
+			    )
+			
+			```
+		lineageTag: e879950d-81fb-4e62-8f55-3832081b66c2
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Trailing Coursework Average' = ```
+			
+			VAR Lab = [Trailing Lab Average]
+			VAR Quiz = [Trailing Quiz Average]
+			VAR Denominator =
+			    IF ( ISBLANK ( Lab ), 0, 1 ) + IF ( ISBLANK ( Quiz ), 0, 1 )
+			RETURN
+			    IF (
+			        Denominator = 0,
+			        BLANK (),
+			        DIVIDE ( IF ( ISBLANK ( Lab ), 0, Lab ) + IF ( ISBLANK ( Quiz ), 0, Quiz ), Denominator )
+			    )
+			
+			```
+		lineageTag: 7efa6433-5065-4ada-9e11-0670461f5549
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Is At Risk' = ```
+			
+			VAR AsOf = [As Of Week Number]
+			VAR Att = [Trailing Attendance Rate]
+			VAR Part = [Trailing Participation Rate]
+			VAR Coursework = [Trailing Coursework Average]
+			VAR Hits =
+			    IF ( NOT ISBLANK ( Att ) && Att < 0.70, 1, 0 )
+			        + IF ( NOT ISBLANK ( Part ) && Part < 0.60, 1, 0 )
+			        + IF ( NOT ISBLANK ( Coursework ) && Coursework < 40, 1, 0 )
+			RETURN
+			    IF ( AsOf < 3, 0, IF ( Hits >= 2, 1, 0 ) )
+			
+			```
+		formatString: 0
+		lineageTag: 9447a6b0-3bd6-43c7-afe7-f7a29d64458a
+
+	measure 'Call This Week' = ```
+			
+			IF (
+			    [As Of Week Number] < 3,
+			    "Too early",
+			    IF ( [Is At Risk] = 1, "Call", "No call" )
+			)
+			
+			```
+		lineageTag: b323816a-b75f-4e55-bc4a-c18c8bdcc5e4
+
+	measure 'Call Reason' = ```
+			
+			VAR AsOf = [As Of Week Number]
+			VAR StartW = MAX ( 1, AsOf - 1 )
+			VAR Att = [Trailing Attendance Rate]
+			VAR Part = [Trailing Participation Rate]
+			VAR Coursework = [Trailing Coursework Average]
+			VAR AttMiss = NOT ISBLANK ( Att ) && Att < 0.70
+			VAR PartMiss = NOT ISBLANK ( Part ) && Part < 0.60
+			VAR WorkMiss = NOT ISBLANK ( Coursework ) && Coursework < 40
+			VAR Hits =
+			    IF ( AttMiss, 1, 0 ) + IF ( PartMiss, 1, 0 ) + IF ( WorkMiss, 1, 0 )
+			VAR Detail =
+			    "Over weeks " & StartW & " to " & AsOf
+			        & ", in class " & IF ( ISBLANK ( Att ), "n/a", FORMAT ( Att, "0%" ) )
+			        & ", took part " & IF ( ISBLANK ( Part ), "n/a", FORMAT ( Part, "0%" ) )
+			        & ", lab and quiz together " & IF ( ISBLANK ( Coursework ), "n/a", FORMAT ( Coursework, "0" ) )
+			        & ". "
+			VAR Which =
+			    IF ( AttMiss, "In class under 70%. ", "" )
+			        & IF ( PartMiss, "Took part under 60%. ", "" )
+			        & IF ( WorkMiss, "Coursework under 40. ", "" )
+			RETURN
+			    IF (
+			        AsOf < 3,
+			        "Too early for a call. The check starts at week 3, and calls wait until week 4.",
+			        Detail
+			            & IF (
+			                Hits >= 2,
+			                "Call. " & Which,
+			                "No call. Fewer than two bars were missed."
+			            )
+			    )
+			
+			```
+		lineageTag: 7b548c01-0c1e-4b05-8e47-19bb41dc6e4b
+
+	measure 'Learners Flagged' = ```
+			
+			COUNTROWS ( FILTER ( DimLearner, [Is At Risk] = 1 ) )
+			
+			```
+		formatString: 0
+		lineageTag: 1ea15b74-11b0-429a-96e4-ee100068b367
+
+	measure 'Monday Headline' = ```
+			
+			VAR N = [Learners Flagged]
+			VAR AsOf = [As Of Week Number]
+			RETURN
+			    IF (
+			        AsOf < 3,
+			        "Too early for a call list. Wait until week 4.",
+			        IF (
+			            N = 0,
+			            "No calls this week. Nobody missed two of the three bars.",
+			            FORMAT ( N, "0" ) & IF ( N = 1, " call this week.", " calls this week." )
+			        )
+			    )
+			
+			```
+		lineageTag: b8270f9e-351d-4623-9711-4db18fc01ac6
+
+	measure 'Trainer Time' = ```
+			
+			VAR N = [Learners Flagged]
+			RETURN
+			    IF (
+			        [As Of Week Number] < 3 || N = 0,
+			        "No trainer time.",
+			        FORMAT ( N, "0" ) & IF ( N = 1, " call, about ", " calls, about " )
+			            & FORMAT ( N * 0.5, "0.0" ) & " hours."
+			    )
+			
+			```
+		lineageTag: 76a0acb6-9f97-4eb6-8693-594d361e763f
+
+	measure 'Flagged Who Did Not Graduate' = ```
+			
+			COUNTROWS (
+			    FILTER (
+			        DimLearner,
+			        [Is At Risk] = 1 && DimLearner[GraduationStatus] = "Non Graduate"
+			    )
+			)
+			
+			```
+		formatString: 0
+		lineageTag: 294817f0-a69e-4f36-b350-2206863691e2
+
+	measure 'Non-Graduates Missed' = ```
+			
+			COUNTROWS (
+			    FILTER (
+			        DimLearner,
+			        [Is At Risk] <> 1 && DimLearner[GraduationStatus] = "Non Graduate"
+			    )
+			)
+			
+			```
+		formatString: 0
+		lineageTag: 5e4f8f45-407d-411e-8555-79cc102011df
+
+	measure Hindsight = ```
+			
+			VAR Known = [Learners With Outcome]
+			VAR Flagged = [Learners Flagged]
+			VAR Hit = [Flagged Who Did Not Graduate]
+			VAR Missed = [Non-Graduates Missed]
+			RETURN
+			    IF (
+			        Known = 0,
+			        "Outcomes are not in yet. This list only shows who has gone quiet.",
+			        "Of the " & Flagged & " on the list, " & Hit & " did not graduate. "
+			            & Missed & " learners who did not graduate are not on the list. "
+			            & "That comparison uses the final outcome, which was not known on the Monday."
+			    )
+			
+			```
+		lineageTag: a11a5f64-fc97-40a9-8c69-fd0170e62c9d
+
+	measure 'Outcome (known only after the program)' = ```
+			
+			VAR GradStatus = SELECTEDVALUE ( DimLearner[GraduationStatus] )
+			VAR Certified = SELECTEDVALUE ( DimLearner[CertificationStatus] )
+			RETURN
+			    IF (
+			        ISBLANK ( GradStatus ),
+			        "In progress",
+			        IF ( GradStatus = "Non Graduate", "Did not graduate", GradStatus )
+			            & ", "
+			            & IF (
+			                Certified = "Certified",
+			                "certified",
+			                IF ( Certified = "Not Certified", "not certified", Certified )
+			            )
+			    )
+			
+			```
+		lineageTag: 0de9b409-6ff6-48da-98e4-a4148576514a
+
+	measure 'Week Attendance Rate' = ```
+			
+			VAR W = SELECTEDVALUE ( DimProgramWeek[WeekNumber] )
+			RETURN
+			    IF (
+			        ISBLANK ( W ) || W > [As Of Week Number],
+			        BLANK (),
+			        DIVIDE ( SUM ( FactAttendance[Attended] ), COUNTROWS ( FactAttendance ) )
+			    )
+			
+			```
+		lineageTag: 9e06b378-9221-4499-83e5-861daf72462f
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Week Participation Rate' = ```
+			
+			VAR W = SELECTEDVALUE ( DimProgramWeek[WeekNumber] )
+			RETURN
+			    IF (
+			        ISBLANK ( W ) || W > [As Of Week Number],
+			        BLANK (),
+			        DIVIDE ( SUM ( FactParticipation[Participated] ), COUNTROWS ( FactParticipation ) )
+			    )
+			
+			```
+		lineageTag: 3e88288f-c0b4-464e-a0b6-a1a42f458bca
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Week Lab Average' = ```
+			
+			VAR W = SELECTEDVALUE ( DimProgramWeek[WeekNumber] )
+			RETURN
+			    IF (
+			        ISBLANK ( W ) || W > [As Of Week Number],
+			        BLANK (),
+			        CALCULATE ( AVERAGE ( FactAssessment[Score] ), FactAssessment[AssessmentType] = "Lab" )
+			    )
+			
+			```
+		lineageTag: 2d10e001-95f4-4092-98cd-13117e074e8d
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Week Quiz Average' = ```
+			
+			VAR W = SELECTEDVALUE ( DimProgramWeek[WeekNumber] )
+			RETURN
+			    IF (
+			        ISBLANK ( W ) || W > [As Of Week Number],
+			        BLANK (),
+			        CALCULATE ( AVERAGE ( FactAssessment[Score] ), FactAssessment[AssessmentType] = "Quiz" )
+			    )
+			
+			```
+		lineageTag: 8e0ee68c-9b4a-4ced-b27f-d8a267d00f04
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Week Is On Or Before As Of' = ```
+			
+			VAR W = SELECTEDVALUE ( DimProgramWeek[WeekNumber] )
+			RETURN
+			    IF ( NOT ISBLANK ( W ) && W <= [As Of Week Number], 1, 0 )
+			
+			```
+		formatString: 0
+		lineageTag: 008a47f3-d217-4d79-8ed3-0294c326975a
+
+	measure 'Cohort Anomaly' = ```
+			
+			VAR AsOf = [As Of Week Number]
+			RETURN
+			    IF (
+			        AsOf < 4,
+			        "Group notes start at week 4, once three earlier weeks exist.",
+			        VAR Lines =
+			            CONCATENATEX (
+			                SUMMARIZE ( DimLearner, DimLearner[CohortName], DimLearner[Track] ),
+			                VAR CohortLabel = DimLearner[CohortName]
+			                VAR TrackLabel = DimLearner[Track]
+			                VAR PriorWeeks =
+			                    FILTER ( ALL ( DimProgramWeek[WeekNumber] ), DimProgramWeek[WeekNumber] < AsOf )
+			                VAR PriorN = COUNTROWS ( PriorWeeks )
+			                VAR PartNow =
+			                    CALCULATE (
+			                        DIVIDE ( SUM ( FactParticipation[Participated] ), COUNTROWS ( FactParticipation ) ),
+			                        REMOVEFILTERS ( DimProgramWeek ),
+			                        DimProgramWeek[WeekNumber] = AsOf
+			                    )
+			                VAR PartPrior =
+			                    AVERAGEX (
+			                        PriorWeeks,
+			                        VAR W = DimProgramWeek[WeekNumber]
+			                        RETURN
+			                            CALCULATE (
+			                                DIVIDE ( SUM ( FactParticipation[Participated] ), COUNTROWS ( FactParticipation ) ),
+			                                REMOVEFILTERS ( DimProgramWeek ),
+			                                DimProgramWeek[WeekNumber] = W
+			                            )
+			                    )
+			                VAR AttNow =
+			                    CALCULATE (
+			                        DIVIDE ( SUM ( FactAttendance[Attended] ), COUNTROWS ( FactAttendance ) ),
+			                        REMOVEFILTERS ( DimProgramWeek ),
+			                        DimProgramWeek[WeekNumber] = AsOf
+			                    )
+			                VAR AttPrior =
+			                    AVERAGEX (
+			                        PriorWeeks,
+			                        VAR W = DimProgramWeek[WeekNumber]
+			                        RETURN
+			                            CALCULATE (
+			                                DIVIDE ( SUM ( FactAttendance[Attended] ), COUNTROWS ( FactAttendance ) ),
+			                                REMOVEFILTERS ( DimProgramWeek ),
+			                                DimProgramWeek[WeekNumber] = W
+			                            )
+			                    )
+			                VAR LabNow =
+			                    CALCULATE (
+			                        CALCULATE ( AVERAGE ( FactAssessment[Score] ), FactAssessment[AssessmentType] = "Lab" ),
+			                        REMOVEFILTERS ( DimProgramWeek ),
+			                        DimProgramWeek[WeekNumber] = AsOf
+			                    )
+			                VAR LabPrior =
+			                    AVERAGEX (
+			                        PriorWeeks,
+			                        VAR W = DimProgramWeek[WeekNumber]
+			                        RETURN
+			                            CALCULATE (
+			                                CALCULATE ( AVERAGE ( FactAssessment[Score] ), FactAssessment[AssessmentType] = "Lab" ),
+			                                REMOVEFILTERS ( DimProgramWeek ),
+			                                DimProgramWeek[WeekNumber] = W
+			                            )
+			                    )
+			                VAR QuizNow =
+			                    CALCULATE (
+			                        CALCULATE ( AVERAGE ( FactAssessment[Score] ), FactAssessment[AssessmentType] = "Quiz" ),
+			                        REMOVEFILTERS ( DimProgramWeek ),
+			                        DimProgramWeek[WeekNumber] = AsOf
+			                    )
+			                VAR QuizPrior =
+			                    AVERAGEX (
+			                        PriorWeeks,
+			                        VAR W = DimProgramWeek[WeekNumber]
+			                        RETURN
+			                            CALCULATE (
+			                                CALCULATE ( AVERAGE ( FactAssessment[Score] ), FactAssessment[AssessmentType] = "Quiz" ),
+			                                REMOVEFILTERS ( DimProgramWeek ),
+			                                DimProgramWeek[WeekNumber] = W
+			                            )
+			                    )
+			                RETURN
+			                    IF (
+			                        PriorN < 3,
+			                        "",
+			                        IF (
+			                            NOT ISBLANK ( PartPrior ) && NOT ISBLANK ( PartNow ) && PartPrior - PartNow > 0.08,
+			                            TrackLabel & ", " & CohortLabel & ", week " & AsOf & ": participation "
+			                                & FORMAT ( PartNow, "0%" ) & ", against " & FORMAT ( PartPrior, "0%" )
+			                                & " in earlier weeks. ",
+			                            ""
+			                        )
+			                            & IF (
+			                                NOT ISBLANK ( AttPrior ) && NOT ISBLANK ( AttNow ) && AttPrior - AttNow > 0.08,
+			                                TrackLabel & ", " & CohortLabel & ", week " & AsOf & ": attendance "
+			                                    & FORMAT ( AttNow, "0%" ) & ", against " & FORMAT ( AttPrior, "0%" )
+			                                    & " in earlier weeks. ",
+			                                ""
+			                            )
+			                            & IF (
+			                                NOT ISBLANK ( LabPrior ) && NOT ISBLANK ( LabNow ) && LabPrior - LabNow > 8,
+			                                TrackLabel & ", " & CohortLabel & ", week " & AsOf & ": labs "
+			                                    & FORMAT ( LabNow, "0" ) & ", against " & FORMAT ( LabPrior, "0" )
+			                                    & " in earlier weeks. ",
+			                                ""
+			                            )
+			                            & IF (
+			                                NOT ISBLANK ( QuizPrior ) && NOT ISBLANK ( QuizNow ) && QuizPrior - QuizNow > 8,
+			                                TrackLabel & ", " & CohortLabel & ", week " & AsOf & ": quizzes "
+			                                    & FORMAT ( QuizNow, "0" ) & ", against " & FORMAT ( QuizPrior, "0" )
+			                                    & " in earlier weeks. ",
+			                                ""
+			                            )
+			                    ),
+			                ""
+			            )
+			        RETURN
+			            IF (
+			                Lines = "",
+			                "Nothing in this week is more than 8 points behind the earlier weeks.",
+			                Lines
+			            )
+			    )
+			
+			```
+		lineageTag: 1be601bb-e6a4-4493-b796-01bba5012e3e
+
+	measure 'Unmatched Participation Names' = ```
+			
+			VAR N =
+			    CALCULATE (
+			        DISTINCTCOUNT ( DataExceptions[RawName] ),
+			        DataExceptions[Reason] = "Participation name did not match a learner"
+			            || DataExceptions[Reason] = "Participation name matched more than one learner",
+			        TREATAS ( VALUES ( DimLearner[Track] ), DataExceptions[Track] ),
+			        TREATAS ( VALUES ( DimLearner[CohortKey] ), DataExceptions[CohortKey] )
+			    )
+			RETURN
+			    IF ( ISBLANK ( N ), 0, N )
+			
+			```
+		formatString: 0
+		lineageTag: ee1fea6d-4b71-46e4-8989-64f9f6966273
+
+	measure 'Unreadable Values' = ```
+			
+			VAR N =
+			    CALCULATE (
+			        COUNTROWS ( DataExceptions ),
+			        CONTAINSSTRING ( DataExceptions[Reason], "could not be read" ),
+			        TREATAS ( VALUES ( DimLearner[Track] ), DataExceptions[Track] ),
+			        TREATAS ( VALUES ( DimLearner[CohortKey] ), DataExceptions[CohortKey] )
+			    )
+			RETURN
+			    IF ( ISBLANK ( N ), 0, N )
+			
+			```
+		formatString: 0
+		lineageTag: 8d2415c5-7124-446c-ba79-3594e1f615de
+
+	measure 'Live Class Learners' = ```
+			
+			CALCULATE (
+			    SUM ( FeedCheck[LearnerCount] ),
+			    FeedCheck[Feed] = "Live class",
+			    TREATAS ( VALUES ( DimLearner[Track] ), FeedCheck[Track] ),
+			    TREATAS ( VALUES ( DimLearner[CohortKey] ), FeedCheck[CohortKey] )
+			)
+			
+			```
+		lineageTag: 81d881b3-8fae-48c0-b4e1-a35bb3af87e3
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Live Class Days' = ```
+			
+			CALCULATE (
+			    SUM ( FeedCheck[DayOrWeekCount] ),
+			    FeedCheck[Feed] = "Live class",
+			    TREATAS ( VALUES ( DimLearner[Track] ), FeedCheck[Track] ),
+			    TREATAS ( VALUES ( DimLearner[CohortKey] ), FeedCheck[CohortKey] )
+			)
+			
+			```
+		formatString: 0
+		lineageTag: 54ec8ebe-7242-4d1e-8128-c5009368ac80
+
+	measure 'Participation Learners' = ```
+			
+			CALCULATE (
+			    SUM ( FeedCheck[LearnerCount] ),
+			    FeedCheck[Feed] = "Participation",
+			    TREATAS ( VALUES ( DimLearner[Track] ), FeedCheck[Track] ),
+			    TREATAS ( VALUES ( DimLearner[CohortKey] ), FeedCheck[CohortKey] )
+			)
+			
+			```
+		lineageTag: 15cae346-3a6a-4d8d-9529-2163cc4779db
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Participation Days' = ```
+			
+			CALCULATE (
+			    SUM ( FeedCheck[DayOrWeekCount] ),
+			    FeedCheck[Feed] = "Participation",
+			    TREATAS ( VALUES ( DimLearner[Track] ), FeedCheck[Track] ),
+			    TREATAS ( VALUES ( DimLearner[CohortKey] ), FeedCheck[CohortKey] )
+			)
+			
+			```
+		formatString: 0
+		lineageTag: 39026228-8351-4f43-b41a-886a82ab26c1
+
+	measure 'Assessment Learners' = ```
+			
+			CALCULATE (
+			    SUM ( FeedCheck[LearnerCount] ),
+			    FeedCheck[Feed] = "Assessments",
+			    TREATAS ( VALUES ( DimLearner[Track] ), FeedCheck[Track] ),
+			    TREATAS ( VALUES ( DimLearner[CohortKey] ), FeedCheck[CohortKey] )
+			)
+			
+			```
+		lineageTag: 46db00bc-d739-4094-9966-9de035712649
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Status Learners' =
+			
+			CALCULATE (
+			    SUM ( FeedCheck[LearnerCount] ),
+			    FeedCheck[Feed] = "Status",
+			    TREATAS ( VALUES ( DimLearner[Track] ), FeedCheck[Track] ),
+			    TREATAS ( VALUES ( DimLearner[CohortKey] ), FeedCheck[CohortKey] )
+			)
+		lineageTag: 3d8b612f-6f6f-4f94-80b2-e4c26053e11b
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Files Agree' = ```
+			
+			"Roster " & [Learners]
+			    & ". Live class " & [Live Class Learners] & " learners, " & [Live Class Days] & " class days across the tracks in view. "
+			    & "Participation " & [Participation Learners] & " learners, " & [Participation Days] & " class days, "
+			    & [Unmatched Participation Names] & " names unmatched. "
+			    & "Assessments " & [Assessment Learners] & " learners. Status " & [Status Learners] & " learners. "
+			    & "Unreadable values " & [Unreadable Values] & "."
+			
+			```
+		lineageTag: b6bc41fc-99d9-4b55-845f-adfd3605a3c6
+
+	column Measure
+		isHidden
+		formatString: 0
+		lineageTag: bc8de3f0-93df-4ad0-8c18-2f663b8a2fbe
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Measure]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Measure = calculated
+		mode: import
+		source = ROW ( "Measure", 1 )
+
+	annotation PBI_Id = 8cb388d877df4407a64985ba6090c019
+

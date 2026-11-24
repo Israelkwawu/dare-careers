@@ -1,0 +1,95 @@
+table DimProgramWeek
+	lineageTag: ff533d48-69c0-4755-9c7e-bd24a3d3a332
+
+	column ProgramWeekKey
+		dataType: string
+		lineageTag: 946b36cd-5451-4816-8586-a1d249744338
+		summarizeBy: none
+		sourceColumn: ProgramWeekKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column CohortKey
+		dataType: string
+		lineageTag: 81972c6c-c711-4dca-a90f-5ecbf17f5c74
+		summarizeBy: none
+		sourceColumn: CohortKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column CohortName
+		dataType: string
+		lineageTag: a267b95e-3438-432f-bbcf-99c14fb17b23
+		summarizeBy: none
+		sourceColumn: CohortName
+
+		annotation SummarizationSetBy = Automatic
+
+	column WeekNumber
+		dataType: int64
+		formatString: 0
+		lineageTag: 24a53af2-3e04-4d66-9ff2-b88bfb9f6a33
+		summarizeBy: sum
+		sourceColumn: WeekNumber
+
+		annotation SummarizationSetBy = Automatic
+
+	column WeekLabel
+		dataType: string
+		lineageTag: b1b16af1-8a62-41c9-ba68-75ab001d9add
+		summarizeBy: none
+		sourceColumn: WeekLabel
+		sortByColumn: WeekNumber
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	column WeekStartDate
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: dfeaeec2-72c6-449f-a076-43426eb2e71b
+		summarizeBy: none
+		sourceColumn: WeekStartDate
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column WeekEndDate
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: ea98a597-b208-483c-be84-8e7a3a9393c3
+		summarizeBy: none
+		sourceColumn: WeekEndDate
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	partition DimProgramWeek = m
+		mode: import
+		source =
+				let
+				    FromDays = Table.SelectColumns(Table.SelectRows(stgClassWeek, each [WeekNumber] <> null), {"CohortKey", "WeekNumber", "ClassDate"}),
+				    FromAss = Table.AddColumn(Table.Distinct(Table.SelectColumns(Table.SelectRows(stgAssessment, each [WeekNumber] <> null), {"CohortKey", "WeekNumber"})), "ClassDate", each null, type date),
+				    Stacked = Table.Combine({FromDays, Table.SelectColumns(FromAss, {"CohortKey", "WeekNumber", "ClassDate"})}),
+				    Grouped = Table.Group(
+				        Stacked,
+				        {"CohortKey", "WeekNumber"},
+				        {
+				            {"WeekStartDate", each let ds = List.RemoveNulls([ClassDate]) in if List.IsEmpty(ds) then null else List.Min(ds), type date},
+				            {"WeekEndDate", each let ds = List.RemoveNulls([ClassDate]) in if List.IsEmpty(ds) then null else List.Max(ds), type date}
+				        }
+				    ),
+				    Keyed = Table.AddColumn(Grouped, "ProgramWeekKey", each [CohortKey] & "|" & Text.From([WeekNumber]), type text),
+				    Labeled = Table.AddColumn(Keyed, "WeekLabel", each "Week " & Text.From([WeekNumber]), type text),
+				    WithCohort = Table.NestedJoin(Labeled, {"CohortKey"}, DimCohort, {"CohortKey"}, "C", JoinKind.LeftOuter),
+				    Named = Table.ExpandTableColumn(WithCohort, "C", {"CohortName"})
+				in
+				    Table.Sort(Table.SelectColumns(Named, {"ProgramWeekKey", "CohortKey", "CohortName", "WeekNumber", "WeekLabel", "WeekStartDate", "WeekEndDate"}), {{"CohortName", Order.Ascending}, {"WeekNumber", Order.Ascending}})
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

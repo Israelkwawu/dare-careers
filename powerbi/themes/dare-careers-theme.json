@@ -1,0 +1,291 @@
+{
+  "name": "Dare Careers",
+  "dataColors": [
+    "#142B4A",
+    "#2563EB",
+    "#60A5FA",
+    "#0F9D8A",
+    "#16A36A",
+    "#E9A23B",
+    "#DC5555"
+  ],
+  "foreground": "#182230",
+  "foregroundNeutralSecondary": "#667085",
+  "foregroundNeutralTertiary": "#98A2B3",
+  "foregroundNeutralLight": "#E5EAF1",
+  "background": "#F5F7FB",
+  "backgroundLight": "#FFFFFF",
+  "backgroundNeutral": "#E5EAF1",
+  "backgroundDark": "#142B4A",
+  "tableAccent": "#2563EB",
+  "shapeStroke": "#E5EAF1",
+  "disabledText": "#98A2B3",
+  "good": "#16A36A",
+  "neutral": "#E9A23B",
+  "bad": "#DC5555",
+  "maximum": "#2563EB",
+  "center": "#E9A23B",
+  "minimum": "#E5EAF1",
+  "null": "#98A2B3",
+  "textClasses": {
+    "callout": {
+      "fontSize": 28,
+      "fontFace": "Segoe UI Semibold",
+      "color": "#142B4A"
+    },
+    "title": {
+      "fontSize": 14,
+      "fontFace": "Segoe UI Semibold",
+      "color": "#142B4A"
+    },
+    "header": {
+      "fontSize": 12,
+      "fontFace": "Segoe UI Semibold",
+      "color": "#182230"
+    },
+    "label": {
+      "fontSize": 10,
+      "fontFace": "Segoe UI",
+      "color": "#667085"
+    }
+  },
+  "visualStyles": {
+    "cardVisual": {
+      "*": {
+        "value": [
+          {
+            "textWrap": true
+          }
+        ]
+      }
+    },
+    "slicer": {
+      "*": {
+        "data": [
+          {
+            "mode": "Dropdown"
+          }
+        ]
+      }
+    },
+    "tableEx": {
+      "*": {
+        "columnHeaders": [
+          {
+            "fontColor": {
+              "solid": {
+                "color": "#142B4A"
+              }
+            },
+            "backColor": {
+              "solid": {
+                "color": "#EAF0F8"
+              }
+            },
+            "autoSizeColumnWidth": true,
+            "columnAdjustment": "growToFit",
+            "fontSize": 11,
+            "bold": true
+          }
+        ],
+        "values": [
+          {
+            "fontColor": {
+              "solid": {
+                "color": "#182230"
+              }
+            },
+            "backColorPrimary": {
+              "solid": {
+                "color": "#FFFFFF"
+              }
+            },
+            "backColorSecondary": {
+              "solid": {
+                "color": "#F8FAFC"
+              }
+            },
+            "fontSize": 10
+          }
+        ],
+        "total": [
+          {
+            "fontColor": {
+              "solid": {
+                "color": "#142B4A"
+              }
+            },
+            "backColor": {
+              "solid": {
+                "color": "#EAF0F8"
+              }
+            },
+            "bold": true
+          }
+        ],
+        "grid": [
+          {
+            "rowPadding": 6,
+            "gridHorizontal": true,
+            "gridHorizontalColor": {
+              "solid": {
+                "color": "#E5EAF1"
+              }
+            },
+            "gridHorizontalWeight": 1,
+            "outlineColor": {
+              "solid": {
+                "color": "#E5EAF1"
+              }
+            }
+          }
+        ],
+        "title": [
+          {
+            "show": true
+          }
+        ]
+      }
+    },
+    "pivotTable": {
+      "*": {
+        "columnHeaders": [
+          {
+            "fontColor": {
+              "solid": {
+                "color": "#142B4A"
+              }
+            },
+            "backColor": {
+              "solid": {
+                "color": "#EAF0F8"
+              }
+            },
+            "autoSizeColumnWidth": true,
+            "columnAdjustment": "growToFit",
+            "fontSize": 11,
+            "bold": true
+          }
+        ],
+        "rowHeaders": [
+          {
+            "fontColor": {
+              "solid": {
+                "color": "#142B4A"
+              }
+            },
+            "backColor": {
+              "solid": {
+                "color": "#F5F7FB"
+              }
+            },
+            "fontSize": 10,
+            "bold": true
+          }
+        ],
+        "values": [
+          {
+            "fontColor": {
+              "solid": {
+                "color": "#182230"
+              }
+            },
+            "backColorPrimary": {
+              "solid": {
+                "color": "#FFFFFF"
+              }
+            },
+            "backColorSecondary": {
+              "solid": {
+                "color": "#F8FAFC"
+              }
+            },
+            "fontSize": 10
+          }
+        ],
+        "total": [
+          {
+            "fontColor": {
+              "solid": {
+                "color": "#142B4A"
+              }
+            },
+            "backColor": {
+              "solid": {
+                "color": "#EAF0F8"
+              }
+            },
+            "bold": true
+          }
+        ],
+        "rowTotal": [
+          {
+            "fontColor": {
+              "solid": {
+                "color": "#142B4A"
+              }
+            },
+            "backColor": {
+              "solid": {
+                "color": "#EAF0F8"
+              }
+            },
+            "bold": true
+          }
+        ],
+        "columnTotal": [
+          {
+            "fontColor": {
+              "solid": {
+                "color": "#142B4A"
+              }
+            },
+            "backColor": {
+              "solid": {
+                "color": "#EAF0F8"
+              }
+            },
+            "bold": true
+          }
+        ],
+        "subTotals": [
+          {
+            "fontColor": {
+              "solid": {
+                "color": "#142B4A"
+              }
+            },
+            "backColor": {
+              "solid": {
+                "color": "#F5F7FB"
+              }
+            },
+            "bold": true
+          }
+        ],
+        "grid": [
+          {
+            "rowPadding": 6,
+            "gridHorizontal": true,
+            "gridHorizontalColor": {
+              "solid": {
+                "color": "#E5EAF1"
+              }
+            },
+            "gridHorizontalWeight": 1,
+            "outlineColor": {
+              "solid": {
+                "color": "#E5EAF1"
+              }
+            }
+          }
+        ],
+        "title": [
+          {
+            "show": true
+          }
+        ]
+      }
+    }
+  }
+}

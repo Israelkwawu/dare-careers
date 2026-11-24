@@ -1,0 +1,44 @@
+table RuleBook
+	lineageTag: 0debb9bb-d634-4de6-80a7-fe5cecb7e39f
+
+	column Signal
+		dataType: string
+		lineageTag: 2467235d-8855-45ec-bfe2-d5d7b4dc80d8
+		summarizeBy: none
+		sourceColumn: Signal
+
+		annotation SummarizationSetBy = Automatic
+
+	column Bar
+		dataType: string
+		lineageTag: 621b6ad2-06b0-4f65-917d-5a6bcb16d977
+		summarizeBy: none
+		sourceColumn: Bar
+
+		annotation SummarizationSetBy = Automatic
+
+	column Applies
+		dataType: string
+		lineageTag: ee0cb60f-4fb8-4923-9be5-9cd417f0d7fa
+		summarizeBy: none
+		sourceColumn: Applies
+
+		annotation SummarizationSetBy = Automatic
+
+	partition RuleBook = m
+		mode: import
+		source =
+				#table(
+				    type table [Signal = text, Bar = text, Applies = text],
+				    {
+				        {"In class", "Under 70% of class days. A day counts after more than 30 minutes.", "The last two program weeks"},
+				        {"Took part", "Under 60% of class days", "The last two program weeks"},
+				        {"Coursework", "Lab and quiz together under 40", "The last two program weeks"},
+				        {"Call", "At least two of the three bars missed", "Shown from week 3. Book calls from week 4."}
+				    }
+				)
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

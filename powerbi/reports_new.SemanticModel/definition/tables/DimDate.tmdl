@@ -1,0 +1,86 @@
+table DimDate
+	lineageTag: 376baf41-1fc2-4179-895f-bfa5b0cb4269
+
+	column Date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 0bd7e6f6-ea5c-4c62-b4ac-e683cc5ebdc4
+		summarizeBy: none
+		sourceColumn: Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Year
+		dataType: int64
+		formatString: 0
+		lineageTag: 523c3ca3-37e2-4da0-a122-58f5bb64a0e3
+		summarizeBy: sum
+		sourceColumn: Year
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthNumber
+		dataType: int64
+		formatString: 0
+		lineageTag: 96f368cb-ff67-416b-9c42-6890ab5f7e6b
+		summarizeBy: sum
+		sourceColumn: MonthNumber
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthName
+		dataType: string
+		lineageTag: 0b384cfd-8226-45ee-b7be-705f732c8bfb
+		summarizeBy: none
+		sourceColumn: MonthName
+
+		annotation SummarizationSetBy = Automatic
+
+	column DayOfWeekNumber
+		dataType: int64
+		formatString: 0
+		lineageTag: 990a0105-9a7f-4bc7-b9bc-5762c1279815
+		summarizeBy: sum
+		sourceColumn: DayOfWeekNumber
+
+		annotation SummarizationSetBy = Automatic
+
+	column DayName
+		dataType: string
+		lineageTag: 9e420bb4-0584-4822-a82b-438a12b5cf03
+		summarizeBy: none
+		sourceColumn: DayName
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimDate = m
+		mode: import
+		source =
+				let
+				    Empty = #table(type table [Date = date, Year = Int64.Type, MonthNumber = Int64.Type, MonthName = text, DayOfWeekNumber = Int64.Type, DayName = text], {}),
+				    Result =
+				        if Table.IsEmpty(DimCohort) then
+				            Empty
+				        else
+				            let
+				                Start = List.Min(DimCohort[StartDate]),
+				                End = List.Max(DimCohort[EndDate]),
+				                Days = List.Dates(Start, Duration.Days(End - Start) + 1, #duration(1, 0, 0, 0)),
+				                T = Table.FromList(Days, Splitter.SplitByNothing(), {"Date"}, null, ExtraValues.Error),
+				                Typed = Table.TransformColumnTypes(T, {{"Date", type date}}),
+				                AddYear = Table.AddColumn(Typed, "Year", each Date.Year([Date]), Int64.Type),
+				                AddMonth = Table.AddColumn(AddYear, "MonthNumber", each Date.Month([Date]), Int64.Type),
+				                AddMonthName = Table.AddColumn(AddMonth, "MonthName", each Date.ToText([Date], "MMMM", "en-US"), type text),
+				                AddDow = Table.AddColumn(AddMonthName, "DayOfWeekNumber", each Date.DayOfWeek([Date], Day.Monday), Int64.Type),
+				                AddDay = Table.AddColumn(AddDow, "DayName", each Date.ToText([Date], "dddd", "en-US"), type text)
+				            in
+				                AddDay
+				in
+				    Result
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,63 @@
+table FactAssessment
+	lineageTag: 6b058b6c-125b-4c7b-8992-b05e615e17c8
+
+	column LearnerKey
+		dataType: string
+		lineageTag: 4d6fbf1c-ace9-490f-aa9e-9ab026d36289
+		summarizeBy: none
+		sourceColumn: LearnerKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column ProgramWeekKey
+		dataType: string
+		lineageTag: e5de353a-a1d3-46e1-a547-21d2144c8531
+		summarizeBy: none
+		sourceColumn: ProgramWeekKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column WeekNumber
+		dataType: int64
+		formatString: 0
+		lineageTag: 2d74f6c9-06be-4d52-8803-83b5750ef057
+		summarizeBy: sum
+		sourceColumn: WeekNumber
+
+		annotation SummarizationSetBy = Automatic
+
+	column AssessmentType
+		dataType: string
+		lineageTag: 78056d95-0ccb-4dd4-8ad7-cf370b4f2340
+		summarizeBy: none
+		sourceColumn: AssessmentType
+
+		annotation SummarizationSetBy = Automatic
+
+	column Score
+		dataType: double
+		lineageTag: 4ff57557-7183-4175-b99b-8c94aa01ebc9
+		summarizeBy: sum
+		sourceColumn: Score
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition FactAssessment = m
+		mode: import
+		source =
+				let
+				    People = Table.SelectColumns(DimLearner, {"LearnerKey", "CohortKey", "Track", "Email"}),
+				    Joined = Table.NestedJoin(stgAssessment, {"CohortKey", "Track", "Email"}, People, {"CohortKey", "Track", "Email"}, "L", JoinKind.LeftOuter),
+				    Expanded = Table.ExpandTableColumn(Joined, "L", {"LearnerKey"}),
+				    Kept = Table.SelectRows(Expanded, each [LearnerKey] <> null and [WeekNumber] <> null),
+				    Keyed = Table.AddColumn(Kept, "ProgramWeekKey", each [CohortKey] & "|" & Text.From([WeekNumber]), type text),
+				    Result = Table.SelectColumns(Keyed, {"LearnerKey", "ProgramWeekKey", "WeekNumber", "AssessmentType", "Score"})
+				in
+				    Table.TransformColumnTypes(Result, {{"WeekNumber", Int64.Type}, {"Score", type number}})
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

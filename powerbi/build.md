@@ -1,6 +1,7 @@
 # Build the report in Power BI Desktop
 
 The queries, the measures, and the decisions are already written. This is the click path. Import mode. No Premium features.
+Use these design notes on a working copy of the report. Keep the original PBIX unchanged.
 
 ## 1. Parameter
 
@@ -91,7 +92,29 @@ Hide the `Measure` column. Then paste each block in `powerbi/measures.dax` as it
 
 Format rates as percentages, averages as numbers, `Is At Risk` as a whole number.
 
-## 5. Pages
+## 5. Theme and visual styling
+
+Import `powerbi/dare-careers-theme.json` from **Design > Import theme**.
+
+Do not edit or repack the `.pbix` as a ZIP; Power BI may reject the result. For programmatic layout changes, first use Desktop to save a working copy as a Power BI Project (`.pbip`), then edit the project's report definition and reopen or reload that project. Keep `reports.pbix` unchanged as the source.
+
+- Page background: `#F3F6FB`
+- Visual surfaces: white
+- Primary text: navy `#172B4D`; secondary labels: slate `#52627A`
+- Accent: blue `#2563EB`; reserve green, amber, and red for success, caution, and risk.
+- Use Segoe UI consistently. Keep titles short, align visual edges, and leave clear gutters between sections.
+- Long narrative measures (`Files Agree`, `Hindsight`, `Cohort Anomaly`, and `Call Reason`) need a wide, wrapping-friendly visual. Do not put these in narrow KPI cards or truncate the underlying message.
+
+Page layout:
+
+- **Monday:** Put cohort, track, and as-of filters in one compact header row. Keep `Monday Headline` and `Trainer Time` as compact KPIs; place the anomaly, file-agreement, and hindsight narratives in readable text panels. Give the call list the largest lower-page area, with the rulebook and exceptions as supporting details.
+- **Overview:** Keep cohort, track, and graduation-status filters at the top. Arrange the eight existing KPI cards in two rows of four. Give the hierarchy matrix and learner detail table separate, full-width rows to avoid horizontal scrolling. Show `Files Agree` as a wrapped supporting summary, not a banner that pushes the tables down.
+- **Trends:** Keep the cohort, track, and as-of filters together. Use separate charts for attendance/participation rates and lab/quiz scores so the distinct metrics are not compared on a shared scale. Keep `Cohort Anomaly` as a short, wrapping callout above the charts. Retain the `Week Is On Or Before As Of` visual filter on each trend chart.
+- **Learner:** Keep the drill-through fields and one as-of control visible. Use a compact learner heading and status cards, a wide wrapped call-reason panel, and a full-width weekly table. Avoid duplicate as-of slicers.
+
+Do not add metrics that are not already defined in `measures.dax`, and do not change the model relationships to achieve these layout changes.
+
+## 6. Pages
 
 Filters, not edits. Sync `As Of Week` across Monday, Trends, and Learner. Do not sync it to Overview. Do not put the status filter on Monday.
 
@@ -147,7 +170,7 @@ A table with `WeekLabel` on the rows and the four week measures as values. Same 
 
 Turn on drill-through from the learner tables on Monday and Overview. Right-click a name, drill through, Learner.
 
-## 6. What to check before you hand it over
+## 7. What to check before you hand it over
 
 Week 4, both tracks: headline is no calls. Hindsight says 0 on the list and 21 who did not graduate are not on the list.
 
@@ -157,7 +180,7 @@ Week 10, Power BI only: attendance rate 100%. Cloud only: about 79%.
 
 Files Agree, no filters: roster 140, live class 140 learners and 100 class days (50 per track, summed), participation the same, 0 unmatched, assessments 140, status 140, unreadable 0. The day counts add the two tracks together. Filter to one track and each day count is 50.
 
-## 7. The two refresh tests
+## 8. The two refresh tests
 
 Remove `Module 7 Data\PowerBI Training\Zoom Attendance\Week 10` and the same folder under Cloud. Refresh. `AsOfWeek` no longer offers Week 10 from the live class. Put the folders back and refresh. The rows return. Lab week 10 stays while the folder is gone, because that column is still in the workbook. That is intentional: each feed keeps what it still contains.
 

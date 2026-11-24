@@ -1,0 +1,36 @@
+table AsOfWeek
+	lineageTag: ea380381-c536-4cc2-8689-a98dc7c463f7
+
+	column WeekNumber
+		dataType: int64
+		formatString: 0
+		lineageTag: f65d5a6f-c49e-4db5-bf1a-b666ea2fbcdb
+		summarizeBy: sum
+		sourceColumn: WeekNumber
+
+		annotation SummarizationSetBy = Automatic
+
+	column WeekLabel
+		dataType: string
+		lineageTag: a6595709-1cd3-4852-91d6-e262a492d927
+		summarizeBy: none
+		sourceColumn: WeekLabel
+		sortByColumn: WeekNumber
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	partition AsOfWeek = m
+		mode: import
+		source =
+				let
+				    Weeks = Table.Distinct(Table.SelectColumns(DimProgramWeek, {"WeekNumber"})),
+				    Labeled = Table.AddColumn(Weeks, "WeekLabel", each "Week " & Text.From([WeekNumber]), type text)
+				in
+				    Table.Sort(Labeled, {{"WeekNumber", Order.Ascending}})
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

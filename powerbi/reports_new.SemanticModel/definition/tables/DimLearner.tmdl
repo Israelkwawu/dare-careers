@@ -1,0 +1,131 @@
+table DimLearner
+	lineageTag: 4cbdfdcb-7f9a-4d73-9abf-2594725a959f
+
+	column LearnerKey
+		dataType: string
+		lineageTag: 30296e80-f843-4443-80da-13e845778cda
+		summarizeBy: none
+		sourceColumn: LearnerKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column CohortKey
+		dataType: string
+		lineageTag: 0208d15e-13a6-4c9b-9f23-6ea8e0e904ce
+		summarizeBy: none
+		sourceColumn: CohortKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column CohortName
+		dataType: string
+		lineageTag: 471fdd01-ad44-4f31-a016-c75082784973
+		summarizeBy: none
+		sourceColumn: CohortName
+
+		annotation SummarizationSetBy = Automatic
+
+	column Track
+		dataType: string
+		lineageTag: 2769faf4-1ec8-426f-95d0-f9d04e8922ee
+		summarizeBy: none
+		sourceColumn: Track
+
+		annotation SummarizationSetBy = Automatic
+
+	column Email
+		dataType: string
+		lineageTag: 2e8716d3-94ce-4578-b4e3-dd114ee4ffcd
+		summarizeBy: none
+		sourceColumn: Email
+
+		annotation SummarizationSetBy = Automatic
+
+	column LearnerName
+		dataType: string
+		lineageTag: 145ea504-079b-4ebc-a1d4-af16812c8955
+		summarizeBy: none
+		sourceColumn: LearnerName
+
+		annotation SummarizationSetBy = Automatic
+
+	column NameKey
+		dataType: string
+		lineageTag: a5c2998e-fb29-40d0-8765-09bd49ca1951
+		summarizeBy: none
+		sourceColumn: NameKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column GraduationStatus
+		dataType: string
+		lineageTag: 1bf4138e-2e11-4ca6-8ff3-e445436d6e7e
+		summarizeBy: none
+		sourceColumn: GraduationStatus
+
+		annotation SummarizationSetBy = Automatic
+
+	column CertificationStatus
+		dataType: string
+		lineageTag: e7f93a1b-805e-4638-b214-ced8fb221797
+		summarizeBy: none
+		sourceColumn: CertificationStatus
+
+		annotation SummarizationSetBy = Automatic
+
+	hierarchy Learner
+		lineageTag: 619567dc-4a59-47c7-ab31-95ab5f670a83
+
+		level CohortName
+			lineageTag: 923644f6-4f65-4b54-ab4e-72164e8f8a5e
+			column: CohortName
+
+		level Track
+			lineageTag: fa012fe1-6848-496d-a049-21130f8687fc
+			column: Track
+
+		level LearnerName
+			lineageTag: f4c8dd23-4e34-4dca-976d-a8cc8241868b
+			column: LearnerName
+
+	partition DimLearner = m
+		mode: import
+		source =
+				let
+				    FromAtt = Table.Group(
+				        Table.SelectRows(stgAttendanceDay, each [Email] <> null),
+				        {"CohortKey", "Track", "Email"},
+				        {{"LearnerName", each let ns = List.RemoveNulls([LearnerName]) in if List.IsEmpty(ns) then null else ns{0}, type text}}
+				    ),
+				    FromAss = Table.Distinct(Table.SelectColumns(Table.SelectRows(stgAssessment, each [Email] <> null), {"CohortKey", "Track", "Email"})),
+				    FromAssNamed = Table.AddColumn(FromAss, "LearnerName", each null, type text),
+				    FromStat = Table.Distinct(Table.SelectColumns(Table.SelectRows(stgStatus, each [Email] <> null), {"CohortKey", "Track", "Email"})),
+				    FromStatNamed = Table.AddColumn(FromStat, "LearnerName", each null, type text),
+				    Stacked = Table.Combine({FromAtt, FromAssNamed, FromStatNamed}),
+				    Named = Table.Group(
+				        Stacked,
+				        {"CohortKey", "Track", "Email"},
+				        {{"LearnerName", each
+				            let
+				                sub = _,
+				                ns = List.RemoveNulls(sub[LearnerName]),
+				                email = List.First(sub[Email])
+				            in
+				                if List.IsEmpty(ns) then fn[DisplayFromEmail](email) else List.First(ns),
+				            type text}}
+				    ),
+				    StatusSlim = Table.SelectColumns(stgStatus, {"CohortKey", "Track", "Email", "GraduationStatus", "CertificationStatus"}),
+				    WithStatus = Table.NestedJoin(Named, {"CohortKey", "Track", "Email"}, StatusSlim, {"CohortKey", "Track", "Email"}, "S", JoinKind.LeftOuter),
+				    Expanded = Table.ExpandTableColumn(WithStatus, "S", {"GraduationStatus", "CertificationStatus"}),
+				    WithCohort = Table.NestedJoin(Expanded, {"CohortKey"}, DimCohort, {"CohortKey"}, "C", JoinKind.LeftOuter),
+				    WithName = Table.ExpandTableColumn(WithCohort, "C", {"CohortName"}),
+				    Keyed = Table.AddColumn(WithName, "LearnerKey", each [CohortKey] & "|" & [Email], type text),
+				    NameKey = Table.AddColumn(Keyed, "NameKey", each fn[NormalizeName]([LearnerName]), type text),
+				    Result = Table.SelectColumns(NameKey, {"LearnerKey", "CohortKey", "CohortName", "Track", "Email", "LearnerName", "NameKey", "GraduationStatus", "CertificationStatus"})
+				in
+				    Table.Sort(Table.Distinct(Result, {"LearnerKey"}), {{"CohortName", Order.Ascending}, {"Track", Order.Ascending}, {"LearnerName", Order.Ascending}})
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

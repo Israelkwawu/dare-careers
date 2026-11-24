@@ -1,0 +1,40 @@
+relationship a60fec18-4de3-8524-35ec-ccc96854c086
+	fromColumn: DimLearner.CohortKey
+	toColumn: DimCohort.CohortKey
+
+relationship 1cfb19b6-2d3b-2893-87f7-94028b9e02d3
+	fromColumn: FeedCheck.CohortKey
+	toColumn: DimCohort.CohortKey
+
+relationship d642f707-20f6-0da7-fb61-1d8bff306356
+	fromColumn: FactAttendance.LearnerKey
+	toColumn: DimLearner.LearnerKey
+
+relationship 73c2132e-2802-b8bb-738d-2debf4d45139
+	fromColumn: FactParticipation.LearnerKey
+	toColumn: DimLearner.LearnerKey
+
+relationship ceff6f83-82be-69ad-aae5-19c31e183d0b
+	fromColumn: FactAssessment.LearnerKey
+	toColumn: DimLearner.LearnerKey
+
+relationship 46afea2d-b654-0e36-aa2f-ad048846c03b
+	fromColumn: FactAttendance.ProgramWeekKey
+	toColumn: DimProgramWeek.ProgramWeekKey
+
+relationship 7d4360fe-95b6-e043-2e27-00fd86222d09
+	fromColumn: FactParticipation.ProgramWeekKey
+	toColumn: DimProgramWeek.ProgramWeekKey
+
+relationship c9ecd46b-4fb7-0ef9-4e09-2c89de6e39cb
+	fromColumn: FactAssessment.ProgramWeekKey
+	toColumn: DimProgramWeek.ProgramWeekKey
+
+relationship a42cfec4-f2cc-6b89-9ec1-e53076cc2eaa
+	fromColumn: FactAttendance.ClassDate
+	toColumn: DimDate.Date
+
+relationship ccd11279-9962-65f4-acd6-d9f07a4c8dd4
+	fromColumn: FactParticipation.ClassDate
+	toColumn: DimDate.Date
+

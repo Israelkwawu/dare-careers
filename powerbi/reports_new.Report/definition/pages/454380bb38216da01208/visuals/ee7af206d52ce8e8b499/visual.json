@@ -1,0 +1,295 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "ee7af206d52ce8e8b499",
+  "position": {
+    "x": 24,
+    "y": 780,
+    "z": 12000,
+    "height": 272,
+    "width": 1872,
+    "tabOrder": 12000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimLearner"
+                    }
+                  },
+                  "Property": "LearnerName"
+                }
+              },
+              "queryRef": "DimLearner.LearnerName",
+              "nativeQueryRef": "LearnerName"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimLearner"
+                    }
+                  },
+                  "Property": "Track"
+                }
+              },
+              "queryRef": "DimLearner.Track",
+              "nativeQueryRef": "Track"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimLearner"
+                    }
+                  },
+                  "Property": "Email"
+                }
+              },
+              "queryRef": "DimLearner.Email",
+              "nativeQueryRef": "Email"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measure"
+                    }
+                  },
+                  "Property": "Outcome (known only after the program)"
+                }
+              },
+              "queryRef": "Measure.Outcome (known only after the program)",
+              "nativeQueryRef": "Outcome (known only after the program)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measure"
+                    }
+                  },
+                  "Property": "Attendance Rate"
+                }
+              },
+              "queryRef": "Measure.Attendance Rate",
+              "nativeQueryRef": "Attendance Rate"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measure"
+                    }
+                  },
+                  "Property": "Participation Rate"
+                }
+              },
+              "queryRef": "Measure.Participation Rate",
+              "nativeQueryRef": "Participation Rate"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measure"
+                    }
+                  },
+                  "Property": "Lab Average"
+                }
+              },
+              "queryRef": "Measure.Lab Average",
+              "nativeQueryRef": "Lab Average"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measure"
+                    }
+                  },
+                  "Property": "Quiz Average"
+                }
+              },
+              "queryRef": "Measure.Quiz Average",
+              "nativeQueryRef": "Quiz Average"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimLearner"
+                    }
+                  },
+                  "Property": "LearnerKey"
+                }
+              },
+              "queryRef": "DimLearner.LearnerKey",
+              "nativeQueryRef": "LearnerKey"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Learner Detail'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "cfb14570030837b0e703",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "DimLearner"
+              }
+            },
+            "Property": "LearnerName"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "4d5e65d2254d474ca8e9",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "DimLearner"
+              }
+            },
+            "Property": "Track"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "73fe5397b7231002ea31",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "DimLearner"
+              }
+            },
+            "Property": "Email"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "61d655b9083780e27b89",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measure"
+              }
+            },
+            "Property": "Outcome (known only after the program)"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "9db474ba32870b65e632",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measure"
+              }
+            },
+            "Property": "Attendance Rate"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "9e713488c2ad09c64b59",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measure"
+              }
+            },
+            "Property": "Participation Rate"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "0838169824a1dc93db80",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measure"
+              }
+            },
+            "Property": "Lab Average"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "35c6907cc27d920c720a",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measure"
+              }
+            },
+            "Property": "Quiz Average"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "ae86d080a7985368e26e",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "DimLearner"
+              }
+            },
+            "Property": "LearnerKey"
+          }
+        },
+        "type": "Categorical"
+      }
+    ]
+  }
+}

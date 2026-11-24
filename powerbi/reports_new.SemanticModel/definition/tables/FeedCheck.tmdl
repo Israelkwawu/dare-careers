@@ -1,0 +1,96 @@
+table FeedCheck
+	lineageTag: c7c5ce32-f586-40fa-8e40-cd7bb6511c7b
+
+	column CohortKey
+		dataType: string
+		lineageTag: 937a352d-45ec-4b90-ac37-58428d0e40a8
+		summarizeBy: none
+		sourceColumn: CohortKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column Track
+		dataType: string
+		lineageTag: 5bf59e5c-0302-4334-b93e-277498e8d855
+		summarizeBy: none
+		sourceColumn: Track
+
+		annotation SummarizationSetBy = Automatic
+
+	column Feed
+		dataType: string
+		lineageTag: 7182a5fe-1d54-44aa-8f55-a7b256fe39b6
+		summarizeBy: none
+		sourceColumn: Feed
+
+		annotation SummarizationSetBy = Automatic
+
+	column LearnerCount
+		dataType: double
+		lineageTag: bd59e99f-1290-41c7-97f3-bc186b360e49
+		summarizeBy: sum
+		sourceColumn: LearnerCount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column DayOrWeekCount
+		dataType: int64
+		formatString: 0
+		lineageTag: d71565bd-6a12-4cab-9ca5-c7a954841ec5
+		summarizeBy: sum
+		sourceColumn: DayOrWeekCount
+
+		annotation SummarizationSetBy = Automatic
+
+	partition FeedCheck = m
+		mode: import
+		source =
+				let
+				    Att = Table.Group(
+				        Table.SelectRows(stgAttendanceDay, each [Email] <> null and [ClassDate] <> null),
+				        {"CohortKey", "Track"},
+				        {
+				            {"LearnerCount", each List.Count(List.Distinct([Email])), Int64.Type},
+				            {"DayOrWeekCount", each List.Count(List.Distinct([ClassDate])), Int64.Type}
+				        }
+				    ),
+				    AttFeed = Table.AddColumn(Att, "Feed", each "Live class", type text),
+				    Matched = Table.SelectRows(stgParticipationMatched, each [MatchStatus] = "Matched" and [LearnerKey] <> null),
+				    PartLearners = Table.Group(Matched, {"CohortKey", "Track"}, {{"LearnerCount", each List.Count(List.Distinct([LearnerKey])), Int64.Type}}),
+				    PartDays = Table.Group(Table.SelectRows(stgParticipation, each [ClassDate] <> null), {"CohortKey", "Track"}, {{"DayOrWeekCount", each List.Count(List.Distinct([ClassDate])), Int64.Type}}),
+				    PartJoin = Table.NestedJoin(PartDays, {"CohortKey", "Track"}, PartLearners, {"CohortKey", "Track"}, "L", JoinKind.LeftOuter),
+				    PartExp = Table.ExpandTableColumn(PartJoin, "L", {"LearnerCount"}),
+				    PartFeed = Table.ReplaceValue(Table.AddColumn(PartExp, "Feed", each "Participation", type text), null, 0, Replacer.ReplaceValue, {"LearnerCount"}),
+				    Ass = Table.Group(
+				        stgAssessment,
+				        {"CohortKey", "Track"},
+				        {
+				            {"LearnerCount", each List.Count(List.Distinct([Email])), Int64.Type},
+				            {"DayOrWeekCount", each List.Count(List.Distinct([WeekNumber])), Int64.Type}
+				        }
+				    ),
+				    AssFeed = Table.AddColumn(Ass, "Feed", each "Assessments", type text),
+				    Stat = Table.Group(
+				        stgStatus,
+				        {"CohortKey", "Track"},
+				        {
+				            {"LearnerCount", each List.Count(List.Distinct([Email])), Int64.Type},
+				            {"DayOrWeekCount", each null, Int64.Type}
+				        }
+				    ),
+				    StatFeed = Table.AddColumn(Stat, "Feed", each "Status", type text),
+				    Stacked = Table.Combine({
+				        Table.SelectColumns(AttFeed, {"CohortKey", "Track", "Feed", "LearnerCount", "DayOrWeekCount"}),
+				        Table.SelectColumns(PartFeed, {"CohortKey", "Track", "Feed", "LearnerCount", "DayOrWeekCount"}),
+				        Table.SelectColumns(AssFeed, {"CohortKey", "Track", "Feed", "LearnerCount", "DayOrWeekCount"}),
+				        Table.SelectColumns(StatFeed, {"CohortKey", "Track", "Feed", "LearnerCount", "DayOrWeekCount"})
+				    })
+				in
+				    Stacked
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
